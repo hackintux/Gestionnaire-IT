@@ -53,14 +53,14 @@ $tabRapport = New-ColoredTabPage "Rapports" ([System.Drawing.Color]::MistyRose)
 $tabControl.TabPages.AddRange(@($tabMaintenance, $tabDiag, $tabNettoyage, $tabRapport))
 $form.Controls.Add($tabControl)
 
-$textBoxLogs = New-Object System.Windows.Forms.TextBox -Property @{
+$textBoxLogs = New-Object System.Windows.Forms.RichTextBox -Property @{
     Multiline = $true
     ScrollBars = 'Vertical'
     Size = New-Object System.Drawing.Size(760, 350)
     Location = New-Object System.Drawing.Point(10, 280)
     ReadOnly = $true
     BackColor = "Black"
-    ForeColor = "Lime"
+    ForeColor = "white"
 }
 $form.Controls.Add($textBoxLogs)
 
@@ -86,52 +86,148 @@ function New-TabButton($tab, $text, $x, $y, $action) {
     $tab.Controls.Add($btn)
 }
 
+function Write-LogError {
+    param([string]$message)
+    $timestamp = (Get-Date).ToString("HH:mm:ss")
+    $textBoxLogs.SelectionColor = [System.Drawing.Color]::Red
+    $textBoxLogs.AppendText("[$timestamp] $message`r`n")
+    $textBoxLogs.SelectionColor = $textBoxLogs.ForeColor
+    $textBoxLogs.SelectionStart = $textBoxLogs.Text.Length
+    $textBoxLogs.ScrollToCaret()
+}
+
+function Write-LogAvert {
+    param([string]$message)
+    $timestamp = (Get-Date).ToString("HH:mm:ss")
+    $textBoxLogs.SelectionColor = [System.Drawing.Color]::yellow
+    $textBoxLogs.AppendText("[$timestamp] $message`r`n")
+    $textBoxLogs.SelectionColor = $textBoxLogs.ForeColor
+    $textBoxLogs.SelectionStart = $textBoxLogs.Text.Length
+    $textBoxLogs.ScrollToCaret()
+}
+
+function Write-LogOk {
+    param([string]$message)
+    $timestamp = (Get-Date).ToString("HH:mm:ss")
+    $textBoxLogs.SelectionColor = [System.Drawing.Color]::Lime
+    $textBoxLogs.AppendText("[$timestamp] $message`r`n")
+    $textBoxLogs.SelectionColor = $textBoxLogs.ForeColor
+    $textBoxLogs.SelectionStart = $textBoxLogs.Text.Length
+    $textBoxLogs.ScrollToCaret()
+}
+
+
 function Scan-WindowsUpdate {
     try {
         Write-Log "Scan Windows Update..."
         $serviceWU = Get-Service -Name wuauserv -ErrorAction Stop
         Write-Log "Service Windows Update : $($serviceWU.Status)"
+
         $session = New-Object -ComObject Microsoft.Update.Session
         $searcher = $session.CreateUpdateSearcher()
-        $historyCount = $searcher.GetTotalHistoryCount()
-        if ($historyCount -gt 0) {
-            $lastEntry = $searcher.QueryHistory($historyCount-1, 1)
-            Write-Log "Dernière mise à jour : $($lastEntry.Date) - Statut : $($lastEntry.ResultCode)"
+        $results = $searcher.Search("IsInstalled=0 and Type='Software'").Updates
+
+        if ($results.Count -eq 0) {
+            Write-LogOk "Aucune mise à jour disponible."
+            return
+        }
+
+        $updateList = ""
+        for ($i = 0; $i -lt $results.Count; $i++) {
+            $title = $results.Item($i).Title
+            $updateList += "$($i+1). $title`n"
+        }
+
+        Write-LogAvert "Mises à jour disponibles :"
+        Write-Log $updateList.Trim()
+
+        $dialogResult = [System.Windows.Forms.MessageBox]::Show(
+            "Les mises à jour suivantes sont disponibles :`n`n$updateList`nVoulez-vous les installer ?",
+            "Mises à jour détectées",
+            [System.Windows.Forms.MessageBoxButtons]::YesNo,
+            [System.Windows.Forms.MessageBoxIcon]::Question
+        )
+
+        if ($dialogResult -eq [System.Windows.Forms.DialogResult]::Yes) {
+            $downloader = $session.CreateUpdateDownloader()
+            $downloader.Updates = $results
+            Write-Log "Téléchargement des mises à jour..."
+            $downloader.Download()
+
+            $installer = $session.CreateUpdateInstaller()
+            $installer.Updates = $results
+            Write-Log "Installation des mises à jour..."
+            $result = $installer.Install()
+
+            Write-LogOk "Résultat de l'installation : $($result.ResultCode)"
         } else {
-            Write-Log "Aucune mise à jour trouvée."
+            Write-LogAvert "Installation des mises à jour annulée par l'utilisateur."
         }
     } catch {
-        Write-Log "Erreur scan Windows Update : $_"
+        Write-LogError "Erreur durant le scan Windows Update : $_"
     }
 }
+
 
 function Repair-WindowsUpdate {
     Write-Log "Réinitialisation des composants Windows Update..."
     Stop-Service wuauserv -Force
     Remove-Item -Path "C:\Windows\SoftwareDistribution" -Recurse -Force -ErrorAction SilentlyContinue
     Start-Service wuauserv
-    Write-Log "Réinitialisation terminée."
+    Write-LogOk "Réinitialisation terminée."
 }
 
 function Force-WindowsUpdateDetection {
     Write-Log "Détection des mises à jour forcée..."
-    UsoClient StartScan
+
+    try {
+        $process = Start-Process -FilePath "UsoClient.exe" -ArgumentList "StartScan" -NoNewWindow -PassThru -ErrorAction Stop
+        $process.WaitForExit()
+
+        if ($process.ExitCode -eq 0) {
+            Write-LogOk "Détection des mises à jour lancée avec succès."
+        } else {
+            Write-LogAvert "Commande UsoClient terminée avec un code inattendu : $($process.ExitCode)"
+        }
+    } catch {
+        Write-LogError "Erreur lors du lancement de la détection : $_"
+    }
 }
 
+
 function Restart-PCCountdown {
-    shutdown /r /t 60
-    Write-Log "Redémarrage prévu dans 60 secondes..."
+    $result = [System.Windows.Forms.MessageBox]::Show(
+        "Voulez-vous redémarrer l’ordinateur dans 60 secondes ?`nVous pouvez encore annuler avec shutdown /a.",
+        "Confirmation de redémarrage",
+        [System.Windows.Forms.MessageBoxButtons]::YesNo,
+        [System.Windows.Forms.MessageBoxIcon]::Warning
+    )
+
+    if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
+        shutdown /r /t 60
+        Write-Log "Redémarrage programmé dans 60 secondes."
+        [System.Windows.Forms.MessageBox]::Show(
+            "Le redémarrage est prévu dans 60 secondes.`nUtilisez shutdown /a pour l'annuler.",
+            "Redémarrage en attente",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Information
+        )
+    } else {
+        Write-Log "Redémarrage annulé par l’utilisateur."
+    }
 }
+
 
 function Create-SystemRestorePoint {
     try {
         Write-Log "Création point de restauration système..."
         Checkpoint-Computer -Description "Point_Restauration_Outil_IT" -RestorePointType "MODIFY_SETTINGS"
-        Write-Log "Point de restauration créé."
+        Write-LogOk "Point de restauration créé."
     } catch {
-        Write-Log "Erreur création point de restauration : $_"
+        Write-LogError "Erreur création point de restauration : $_"
     }
 }
+
 
 function Scan-InstalledApps {
     Write-Log "Scan des logiciels installés..."
@@ -144,25 +240,70 @@ function Scan-InstalledApps {
                      Where-Object { $_.DisplayName -like "*$software*" }
         }
         if ($found) {
-            Write-Log "$software trouvé : version $($found.DisplayVersion)"
+            Write-LogOk "$software trouvé : version $($found.DisplayVersion)"
         } else {
-            Write-Log "$software non trouvé."
+            Write-LogAvert "$software non trouvé."
         }
     }
 }
 
 function Check-ObsoleteDrivers {
-    Write-Log "Scan des pilotes en cours..."
+    Write-Log "Scan des pilotes obsolètes..."
+
     $drivers = Get-WmiObject Win32_PnPSignedDriver -ErrorAction SilentlyContinue
     $limitDate = (Get-Date).AddYears(-2)
+    $obsolete = @()
+
     foreach ($driver in $drivers) {
-        if ($driver.DriverDate) {
-            $driverDate = [datetime]::ParseExact($driver.DriverDate.Substring(0,8), 'yyyyMMdd', $null)
-            $status = if ($driverDate -lt $limitDate) { "Obsolète" } else { "OK" }
-            Write-Log "$($driver.DeviceName) - $driverDate - $($driver.DriverVersion) - $status"
+        if ($driver.DriverDate -and $driver.DeviceName -ne "") {
+            $driverDate = try {
+                [datetime]::ParseExact($driver.DriverDate.Substring(0,8), 'yyyyMMdd', $null)
+            } catch {
+                continue
+            }
+
+            if ($driverDate -lt $limitDate -and $driver.DeviceName -notmatch "PCI|USB|Audio|Graphics|LAN|Wireless|Bluetooth") {
+                $obsolete += $driver
+                Write-LogAvert "$($driver.DeviceName) - $driverDate - $($driver.DriverVersion) - POTENTIELLEMENT OBSOLÈTE"
+            }
         }
     }
+
+    if ($obsolete.Count -eq 0) {
+        Write-LogOk "Aucun pilote obsolète détecté ou désactivable en toute sécurité."
+        return
+    }
+
+    $msg = "Les pilotes suivants semblent obsolètes :`n"
+    $i = 1
+    foreach ($d in $obsolete) {
+        $msg += "$i. $($d.DeviceName) - $($d.DriverVersion)`n"
+        $i++
+    }
+
+    $confirmation = [System.Windows.Forms.MessageBox]::Show(
+        "$msg`nSouhaitez-vous tenter de les désinstaller ?",
+        "Suppression des pilotes obsolètes",
+        [System.Windows.Forms.MessageBoxButtons]::YesNo,
+        [System.Windows.Forms.MessageBoxIcon]::Question
+    )
+
+    if ($confirmation -eq [System.Windows.Forms.DialogResult]::Yes) {
+        foreach ($d in $obsolete) {
+            try {
+                $infName = $d.InfName
+                Write-Log "Suppression du pilote : $($d.DeviceName) ($infName)..."
+                pnputil /delete-driver "$infName" /uninstall /force /quiet
+                Write-Log "Pilote supprimé : $infName"
+            } catch {
+                Write-LogError "Erreur suppression pilote $($d.DeviceName) : $_"
+            }
+        }
+    } else {
+        Write-Log "Suppression des pilotes annulée par l'utilisateur."
+    }
 }
+
 
 function Show-NetworkConnections {
     Write-Log "Connexions réseau actives :"
@@ -191,7 +332,7 @@ function Check-Antivirus {
             Write-Log "Antivirus : $($av.displayName)"
         }
     } else {
-        Write-Log "Aucun antivirus détecté."
+        Write-LogAvert "Aucun antivirus détecté."
     }
 }
 
@@ -212,7 +353,7 @@ function Boost-PCPerformance {
 }
 
 function Uninstall-TargetedApps {
-    $appsToRemove = @("Microsoft Teams", "OneDrive", "Java")
+    $appsToRemove = @("Microsof Teams", "OneDriv", "ava")
     foreach ($app in $appsToRemove) {
         $products = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -like "*$app*" }
         foreach ($prod in $products) {
