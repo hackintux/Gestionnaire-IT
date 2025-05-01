@@ -56,13 +56,52 @@ $form.Controls.Add($tabControl)
 $textBoxLogs = New-Object System.Windows.Forms.RichTextBox -Property @{
     Multiline = $true
     ScrollBars = 'Vertical'
-    Size = New-Object System.Drawing.Size(760, 350)
+    Size = New-Object System.Drawing.Size(760, 300)  # au lieu de 350
     Location = New-Object System.Drawing.Point(10, 280)
     ReadOnly = $true
     BackColor = "Black"
     ForeColor = "white"
 }
 $form.Controls.Add($textBoxLogs)
+
+$progressBar = New-Object System.Windows.Forms.ProgressBar
+$progressBar.Size = New-Object System.Drawing.Size(760, 15)
+$progressBar.Location = New-Object System.Drawing.Point(10, 590)
+$progressBar.Visible = $false
+$form.Controls.Add($progressBar)
+
+function Animate-ProgressBar {
+    param (
+        [System.Windows.Forms.ProgressBar]$progressBar,
+        [int]$durationSeconds = 30
+    )
+
+    if (-not $progressBar) {
+        Write-LogError "ProgressBar non définie."
+        return
+    }
+
+    $progressBar.Visible = $true
+    $progressBar.Style = 'Blocks'
+    $progressBar.Minimum = 0
+    $progressBar.Maximum = 100
+    $progressBar.Value = 0
+    $form.Refresh()
+    [System.Windows.Forms.Application]::DoEvents()
+
+    $stepCount = $durationSeconds * 10
+    for ($i = 1; $i -le $stepCount; $i++) {
+        $progress = [math]::Round(($i / $stepCount) * 100)
+        $progressBar.Value = [math]::Min($progress, 100)
+        Start-Sleep -Milliseconds 100
+        [System.Windows.Forms.Application]::DoEvents()
+    }
+
+    $progressBar.Value = 100
+    Start-Sleep -Milliseconds 300
+    $progressBar.Visible = $false
+}
+
 
 function Write-Log {
     param([string]$message)
@@ -122,7 +161,7 @@ function Scan-WindowsUpdate {
         Write-Log "Scan Windows Update..."
         $serviceWU = Get-Service -Name wuauserv -ErrorAction Stop
         Write-Log "Service Windows Update : $($serviceWU.Status)"
-
+	Animate-ProgressBar -progressBar $progressBar -durationSeconds 7
         $session = New-Object -ComObject Microsoft.Update.Session
         $searcher = $session.CreateUpdateSearcher()
         $results = $searcher.Search("IsInstalled=0 and Type='Software'").Updates
@@ -167,7 +206,6 @@ function Scan-WindowsUpdate {
         Write-LogError "Erreur durant le scan Windows Update : $_"
     }
 }
-
 
 function Repair-WindowsUpdate {
     Write-Log "Réinitialisation des composants Windows Update..."
@@ -274,18 +312,13 @@ function Check-ObsoleteDrivers {
         return
     }
 
-    $msg = "Les pilotes suivants semblent obsolètes :`n"
-    $i = 1
-    foreach ($d in $obsolete) {
-        $msg += "$i. $($d.DeviceName) - $($d.DriverVersion)`n"
-        $i++
-    }
+    Write-LogAvert "Nombre total de pilotes potentiellement obsolètes : $($obsolete.Count)"
 
     $confirmation = [System.Windows.Forms.MessageBox]::Show(
-        "$msg`nSouhaitez-vous tenter de les désinstaller ?",
+        "Il y a $($obsolete.Count) pilotes potentiellement obsolètes.`nSouhaitez-vous les désinstaller ?",
         "Suppression des pilotes obsolètes",
         [System.Windows.Forms.MessageBoxButtons]::YesNo,
-        [System.Windows.Forms.MessageBoxIcon]::Question
+        [System.Windows.Forms.MessageBoxIcon]::Warning
     )
 
     if ($confirmation -eq [System.Windows.Forms.DialogResult]::Yes) {
