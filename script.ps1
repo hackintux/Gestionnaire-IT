@@ -643,7 +643,7 @@ function Boost-PCPerformance {
 }
 
 function Uninstall-TargetedApps {
-    $appsToRemove = @("OneDrive", "Java", "Driver Booster")  # Liste de mots-cl�s � filtrer
+    $appsToRemove = @("OneDrive", "Java", "Driver Booster", "MacAfee")  # Liste de mots-cl�s � filtrer
 
     $registryPaths = @(
         "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*",
