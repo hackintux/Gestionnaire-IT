@@ -1,10 +1,3 @@
-# GESTIONNAIRE IT - Maintenance et Diagnostic ClicOnLine
-
-# ----------------------------
-# VeRIFICATION DES PRIVILÈGES
-# ----------------------------
-
-
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
@@ -38,6 +31,7 @@ $tabControl.Add_DrawItem({
         3 { [System.Drawing.Brushes]::MediumPurple }
         4 { [System.Drawing.Brushes]::LightBlue }
         5 { [System.Drawing.Brushes]::DarkSeaGreen }
+        6 { [System.Drawing.Brushes]::DarkSeaGreen }
         default { [System.Drawing.Brushes]::DarkSeaGreen }
     }
 
@@ -59,8 +53,9 @@ $tabNettoyage = New-ColoredTabPage "Nettoyage" ([System.Drawing.Color]::LightCor
 $tabBoost = New-ColoredTabPage "Boost" ([System.Drawing.Color]::Lavender)
 $tabRapport = New-ColoredTabPage "Rapports" ([System.Drawing.Color]::LightBlue)
 $tabo365 = New-ColoredTabPage "Office 365" ([System.Drawing.Color]::DarkSeaGreen)
+$tabWildix = New-ColoredTabPage "Wildix" ([System.Drawing.Color]::DarkSeaGreen)
 
-$tabControl.TabPages.AddRange(@($tabMaj, $tabDiag, $tabNettoyage, $tabBoost, $tabRapport, $tabo365))
+$tabControl.TabPages.AddRange(@($tabMaj, $tabDiag, $tabNettoyage, $tabBoost, $tabRapport, $tabo365, $tabWildix))
 $form.Controls.Add($tabControl)
 
 $textBoxLogs = New-Object System.Windows.Forms.RichTextBox -Property @{
@@ -124,53 +119,16 @@ function Write-Log {
 # Message de bienvenue
 Write-Log "Bienvenue dans le Gestionnaire IT de ClicOnLine. Toutes les actions effectuees s'afficheront ici."
 
-function Resize-Image($image, $width, $height) {
-    $resized = New-Object System.Drawing.Bitmap $width, $height
-    $graphics = [System.Drawing.Graphics]::FromImage($resized)
-    $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
-    $graphics.DrawImage($image, 0, 0, $width, $height)
-    $graphics.Dispose()
-    return $resized
-}
-
-function New-TabButton {
-    param(
-        [System.Windows.Forms.TabPage]$tab,
-        [string]$text,
-        [int]$x,
-        [int]$y,
-        [ScriptBlock]$action,
-        [string]$iconName = $null  # <- on change ici
-    )
-
+function New-TabButton($tab, $text, $x, $y, $action) {
     $btn = New-Object System.Windows.Forms.Button -Property @{
         Text = $text
-        Size = New-Object System.Drawing.Size(330, 40)
-        Location = New-Object System.Drawing.Point($x, $y)
+        Size = New-Object System.Drawing.Size(330,40)
+        Location = New-Object System.Drawing.Point($x,$y)
         BackColor = [System.Drawing.Color]::LightSteelBlue
-        TextAlign = 'Middlecenter'
     }
-
-    if ($iconName) {
-        try {
-            $icon = Resize-Image ([System.Drawing.SystemIcons]::$iconName.ToBitmap()) 24 24
-            $btn.Image = $icon
-            $btn.ImageAlign = 'MiddleLeft'
-            $btn.TextAlign = 'Middlecenter'
-        } catch {
-            Write-Warning "Icône système '$iconName' introuvable."
-        }
-    }
-
-    $btn.Add_Click({
-        Set-Status "Action en cours : $text..."
-        & $action
-        Set-Status "Prêt."
-    })
-
+    $btn.Add_Click($action)
     $tab.Controls.Add($btn)
 }
-
 
 function Write-LogError {
     param([string]$message)
@@ -214,7 +172,7 @@ function Scan-WindowsUpdate {
         $results = $searcher.Search("IsInstalled=0 and Type='Software'").Updates
 
         if ($results.Count -eq 0) {
-            Write-LogOk "Aucune mise a jour disponible."
+            Write-LogOk "Aucune mise e jour disponible."
             return
         }
 
@@ -224,12 +182,12 @@ function Scan-WindowsUpdate {
             $updateList += "$($i+1). $title`n"
         }
 
-        Write-LogAvert "Mises a jour disponibles :"
+        Write-LogAvert "Mises e jour disponibles :"
         Write-Log $updateList.Trim()
 
         $dialogResult = [System.Windows.Forms.MessageBox]::Show(
-            "Les mises a jour suivantes sont disponibles :`n`n$updateList`nVoulez-vous les installer ?",
-            "Mises a jour detectees",
+            "Les mises e jour suivantes sont disponibles :`n`n$updateList`nVoulez-vous les installer ?",
+            "Mises e jour detectees",
             [System.Windows.Forms.MessageBoxButtons]::YesNo,
             [System.Windows.Forms.MessageBoxIcon]::Question
         )
@@ -237,17 +195,17 @@ function Scan-WindowsUpdate {
         if ($dialogResult -eq [System.Windows.Forms.DialogResult]::Yes) {
             $downloader = $session.CreateUpdateDownloader()
             $downloader.Updates = $results
-            Write-Log "Telechargement des mises a jour..."
+            Write-Log "Telechargement des mises e jour..."
             $downloader.Download()
 
             $installer = $session.CreateUpdateInstaller()
             $installer.Updates = $results
-            Write-Log "Installation des mises a jour..."
+            Write-Log "Installation des mises e jour..."
             $result = $installer.Install()
 
             Write-LogOk "Resultat de l'installation : $($result.ResultCode)"
         } else {
-            Write-LogAvert "Installation des mises a jour annulee par l'utilisateur."
+            Write-LogAvert "Installation des mises e jour annulee par l'utilisateur."
         }
     } catch {
         Write-LogError "Erreur durant le scan Windows Update : $_"
@@ -291,14 +249,14 @@ function Repair-WindowsUpdate {
 
 
 function Force-WindowsUpdateDetection {
-    Write-Log "Detection des misesajour forcee..."
+    Write-Log "Detection des mises e jour forcee..."
 
     try {
         $process = Start-Process -FilePath "UsoClient.exe" -ArgumentList "StartScan" -NoNewWindow -PassThru -ErrorAction Stop
         $process.WaitForExit()
 
         if ($process.ExitCode -eq 0) {
-            Write-LogOk "Detection des misesajour lancee avec succes."
+            Write-LogOk "Detection des mises e jour lancee avec succes."
         } else {
             Write-LogAvert "Commande UsoClient terminee avec un code inattendu : $($process.ExitCode)"
         }
@@ -326,7 +284,7 @@ function Restart-PCCountdown {
             [System.Windows.Forms.MessageBoxIcon]::Information
         )
     } else {
-        Write-Log "Redemarrage annule par l'utilisateur."
+        Write-Log "Redemarrage annule par leutilisateur."
     }
 }
 
@@ -335,7 +293,7 @@ function Create-SystemRestorePoint {
     try {
         Write-Log "Creation point de restauration systeme..."
         Checkpoint-Computer -Description "Point_Restauration_Outil_IT" -RestorePointType "MODIFY_SETTINGS"
-        Write-LogOk "Point de restauration creer."
+        Write-LogOk "Point de restauration cree."
     } catch {
         Write-LogError "Erreur creation point de restauration : $_"
     }
@@ -377,7 +335,7 @@ function Check-ObsoleteDrivers {
 
             if ($driverDate -lt $limitDate -and $driver.DeviceName -notmatch "PCI|USB|Audio|Graphics|LAN|Wireless|Bluetooth") {
                 $obsolete += $driver
-                Write-LogAvert "$($driver.DeviceName) - $driverDate - $($driver.DriverVersion) - POTENTIELLEMENT OBSOLETE"
+                Write-LogAvert "$($driver.DeviceName) - $driverDate - $($driver.DriverVersion) - POTENTIELLEMENT OBSOLeTE"
             }
         }
     }
@@ -533,7 +491,7 @@ function Show-SystemHealthDashboard {
         foreach ($t in $temps) {
             $celsius = ($t.CurrentTemperature / 10) - 273.15
             $tempStr = [math]::Round($celsius, 1)
-            Write-Log "Temperature CPU : $tempStr °C"
+            Write-Log "Temperature CPU : $tempStr eC"
         }
     } catch {
         Write-LogAvert "Temperature CPU non accessible (capteur ou droits manquants)"
@@ -545,7 +503,7 @@ function Check-Antivirus {
     $antivirus = Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct -ErrorAction SilentlyContinue
     if ($antivirus) {
         foreach ($av in $antivirus) {
-            Write-LogOk "Antivirus : $($av.displayName)"
+            Write-Log "Antivirus : $($av.displayName)"
         }
     } else {
         Write-LogAvert "Aucun antivirus detecte."
@@ -579,7 +537,7 @@ function Boost-PCPerformance {
         "Nettoyer le dossier Temp",
         "Vider la corbeille",
         "Arreter OneDrive",
-        "Augmenter la RAM virtuelle",
+        "Augmenter la RAM virtuelle (pagefile)",
         "Gerer les apps au demarrage"
     ))
     $formBoost.Controls.Add($checkList)
@@ -597,7 +555,7 @@ function Boost-PCPerformance {
     $formBoost.Controls.Add($btnCancel)
 
     if ($formBoost.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Boost PC annule par l'utilisateur."
+        Write-Log "Boost PC annule par leutilisateur."
         return
     }
 
@@ -625,12 +583,12 @@ function Boost-PCPerformance {
           	try {
     		$totalRAM_MB = (Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1MB
     		$pagefileSize = [math]::Round($totalRAM_MB * 1.5)
-    		Write-Log "RAM installee : $([math]::Round($totalRAM_MB)) Mo => Fichier d'echange : $pagefileSize Mo"
+    		Write-Log "RAM installee : $([math]::Round($totalRAM_MB)) Mo => Fichier deechange : $pagefileSize Mo"
 
    	 	wmic computersystem where name="%computername%" set AutomaticManagedPagefile=False | Out-Null
     		wmic pagefileset where name="C:\\pagefile.sys" set InitialSize=$pagefileSize,MaximumSize=$pagefileSize | Out-Null
 
-    		Write-LogOk "RAM virtuelle configuree a $pagefileSize Mo"
+    		Write-LogOk "RAM virtuelle configuree e $pagefileSize Mo"
 		} catch {
     		Write-LogError "Erreur configuration RAM virtuelle : $_"
 		}
@@ -669,7 +627,7 @@ function Boost-PCPerformance {
                     $btnDisable.Add_Click({
                         foreach ($entry in $listView.Items) {
                             if ($entry.Checked -eq $false) {
-                                Write-LogAvert "desactiver manuellement : $($entry.Text)"
+                                Write-LogAvert "e desactiver manuellement : $($entry.Text)"
                                 # Pas d'API directe fiable pour les desactiver (demande teche planifiee ou registry selon contexte)
                             }
                         }
@@ -689,7 +647,7 @@ function Boost-PCPerformance {
 }
 
 function Uninstall-TargetedApps {
-    $appsToRemove = @("OneDrive", "Java", "Driver Booster", "MacAfee")  # Liste de mots-clesafiltrer
+    $appsToRemove = @("OneDrive", "Java", "Driver Booster", "MacAfee")  # Liste de mots-cles e filtrer
 
     $registryPaths = @(
         "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*",
@@ -751,7 +709,7 @@ function Uninstall-TargetedApps {
     $form.Controls.Add($btnCancel)
 
     if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Desinstallation annulee par l'utilisateur."
+        Write-Log "Desinstallation annulee par leutilisateur."
         return
     }
 
@@ -799,7 +757,7 @@ function Uninstall-Bitdefender {
 function Update-Apps {
     # Fenetre de selection
     $formUpdate = New-Object System.Windows.Forms.Form
-    $formUpdate.Text = "Mise a jour des applications"
+    $formUpdate.Text = "Mise e jour des applications"
     $formUpdate.Size = New-Object System.Drawing.Size(360,220)
     $formUpdate.StartPosition = "CenterParent"
     $formUpdate.Font = New-Object System.Drawing.Font("Segoe UI", 10)
@@ -812,7 +770,7 @@ function Update-Apps {
     $formUpdate.Controls.Add($checkList)
 
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Text = "Lancer la mise a jour"
+    $btnOK.Text = "Lancer la mise e jour"
     $btnOK.Location = New-Object System.Drawing.Point(180,120)
     $btnOK.Add_Click({ $formUpdate.DialogResult = [System.Windows.Forms.DialogResult]::OK; $formUpdate.Close() })
     $formUpdate.Controls.Add($btnOK)
@@ -824,7 +782,7 @@ function Update-Apps {
     $formUpdate.Controls.Add($btnCancel)
 
     if ($formUpdate.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Mise a jour annulee par l'utilisateur."
+        Write-Log "Mise e jour annulee par leutilisateur."
         return
     }
 
@@ -844,34 +802,34 @@ function Update-Apps {
 
     # MAJ Chrome
     if ($checkList.CheckedItems -contains "Google Chrome") {
-        Write-Log "Mise a jour de Google Chrome..."
+        Write-Log "Mise e jour de Google Chrome..."
         $oldVersion = Get-ChromeVersion
         Write-Log "Version actuelle de Chrome : $oldVersion"
 
         try {
             Get-Process -Name chrome -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
             Start-Sleep -Seconds 2
-            Write-LogOk "Chrome arrete avant mise a jour."
+            Write-LogOk "Chrome arrete avant mise e jour."
         } catch {
-            Write-LogAvert "Chrome non detecte ou echec a l'arret."
+            Write-LogAvert "Chrome non detecte ou echec e l'arret."
         }
 
         try {
             $chromeResult = winget upgrade --id Google.Chrome --silent --accept-source-agreements --accept-package-agreements 2>&1
             if ($chromeResult -match "No applicable update found" -or $chromeResult -match "Aucune mise") {
-                Write-LogOk "Chrome est deja a jour."
+                Write-LogOk "Chrome est deje e jour."
             } elseif ($chromeResult -match "error|echec|failed") {
-                Write-LogError "Erreur mise a jour Chrome : $chromeResult"
+                Write-LogError "Erreur mise e jour Chrome : $chromeResult"
             } else {
-                Write-LogOk "Mise a jour Chrome terminee."
+                Write-LogOk "Mise e jour Chrome terminee."
             }
         } catch {
-            Write-LogError "Exception mise a jour Chrome : $_"
+            Write-LogError "Exception mise e jour Chrome : $_"
         }
 
         $newVersion = Get-ChromeVersion
         if ($newVersion -ne $oldVersion) {
-            Write-LogOk "Chrome mise a jour : $oldVersion ? $newVersion"
+            Write-LogOk "Chrome mis e jour : $oldVersion ? $newVersion"
         } else {
             Write-Log "Version Chrome inchangee apres MAJ : $newVersion"
         }
@@ -879,18 +837,18 @@ function Update-Apps {
 
     # MAJ Adobe
     if ($checkList.CheckedItems -contains "Adobe Acrobat Reader") {
-        Write-Log "Mise a jour d'Adobe Acrobat Reader..."
+        Write-Log "Mise e jour d'Adobe Acrobat Reader..."
         try {
             $adobeResult = winget upgrade --id Adobe.Acrobat.Reader.64-bit --silent --accept-source-agreements --accept-package-agreements 2>&1
             if ($adobeResult -match "No applicable update found" -or $adobeResult -match "Aucune mise") {
-                Write-LogOk "Adobe Reader est deja a jour."
+                Write-LogOk "Adobe Reader est deje e jour."
             } elseif ($adobeResult -match "error|echec|failed") {
-                Write-LogError "Erreur mise a jour Adobe : $adobeResult"
+                Write-LogError "Erreur mise e jour Adobe : $adobeResult"
             } else {
-                Write-LogOk "Mise a jour Adobe Reader terminee."
+                Write-LogOk "Mise e jour Adobe Reader terminee."
             }
         } catch {
-            Write-LogError "Exception mise a jour Adobe : $_"
+            Write-LogError "Exception mise e jour Adobe : $_"
         }
     }
 }
@@ -927,7 +885,7 @@ function Check-CriticalServices {
         return
     }
 
-    # Creer une interface pour choisir les servicesaredemarrer
+    # Creer une interface pour choisir les services e redemarrer
     $form = New-Object System.Windows.Forms.Form
     $form.Text = "Demarrer les services arretes"
     $form.Size = New-Object System.Drawing.Size(400, 300)
@@ -1055,7 +1013,7 @@ function Repair-OutlookPST {
 
         if (Test-Path $scanpstPath) {
             Start-Process -FilePath $scanpstPath -Wait
-            Write-Log "L'outil SCANPST a été lance. L'utilisateur doit choisir le fichier PST/OST a reparer."
+            Write-Log "L'outil SCANPST a ete lance. L'utilisateur doit choisir le fichier PST/OST a reparer."
         } else {
             Write-LogError "SCANPST.EXE introuvable sur ce systeme."
         }
@@ -1091,7 +1049,7 @@ function Show-OutlookProfilesWithRepair {
         }
 
         $form = New-Object System.Windows.Forms.Form
-        $form.Text = "Profils Outlook - Sélection pour reparation"
+        $form.Text = "Profils Outlook - Selection pour reparation"
         $form.Size = New-Object System.Drawing.Size(500, 400)
         $form.StartPosition = "CenterScreen"
 
@@ -1130,7 +1088,7 @@ function Show-OutlookProfilesWithRepair {
             return
         }
 
-        # Réparation de base : suppression des fichiers .dat/.xml liés
+        # Reparation de base : suppression des fichiers .dat/.xml lies
         Write-LogAvert "Outlook arrete pour maintenance."
         Get-Process -Name outlook -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
@@ -1152,6 +1110,56 @@ function Show-OutlookProfilesWithRepair {
         Write-LogError "Erreur durant la detection ou la reparation des profils Outlook : $_"
     }
 }
+
+function Restart-WildixPhone {
+    # Demande IP
+    Add-Type -AssemblyName Microsoft.VisualBasic
+    $ip = [Microsoft.VisualBasic.Interaction]::InputBox("Adresse IP du telephone Wildix :", "Redemarrage Wildix", "")
+    if (-not $ip) {
+        Write-LogAvert "Redemarrage annulé - IP non fournie."
+        return
+    }
+
+    # Demande utilisateur
+    $user = [Microsoft.VisualBasic.Interaction]::InputBox("Nom d'utilisateur :", "Redemarrage Wildix")
+    if (-not $user) {
+        Write-LogAvert "Redemarrage annule - utilisateur non fourni."
+        return
+    }
+
+    # Demande mot de passe
+    $pass = [Microsoft.VisualBasic.Interaction]::InputBox("Mot de passe :", "Redemarrage Wildix (mot de passe non masque)")
+    if (-not $pass) {
+        Write-LogAvert "Redemarrage annule - mot de passe non fourni."
+        return
+    }
+
+    $confirm = [System.Windows.Forms.MessageBox]::Show(
+        "Redemarrer le telephone à l'adresse $ip avec l'utilisateur $user ?",
+        "Confirmation",
+        [System.Windows.Forms.MessageBoxButtons]::YesNo,
+        [System.Windows.Forms.MessageBoxIcon]::Question
+    )
+
+    if ($confirm -ne [System.Windows.Forms.DialogResult]::Yes) {
+        Write-LogAvert "Redemarrage annule par l'utilisateur."
+        return
+    }
+
+    $url = "http://$ip/cgi-bin/cgi?USER=$user&PWD=$pass&action=restart"
+
+    try {
+        $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10
+        if ($response.StatusCode -eq 200) {
+            Write-LogOk "Redemarrage du telephone $ip lance avec succes."
+        } else {
+            Write-LogError "Erreur HTTP : $($response.StatusCode)"
+        }
+    } catch {
+        Write-LogError "Echec de la requete vers $ip : $_"
+    }
+}
+
 
 
 # Boutons
@@ -1184,5 +1192,7 @@ New-TabButton $tabo365 "Vider le cache d'Outlook" 20 140 { Clear-OutlookCache }
 New-TabButton $tabo365 "Vider les dossiers temporaires d'Outlook" 400 20 { Clean-OutlookTempFolder }
 New-TabButton $tabo365 "Reparation fichier PST/OST" 400 80 { Repair-OutlookPST }
 New-TabButton $tabo365 "Reparation profil" 400 140 { Show-OutlookProfilesWithRepair }
+
+New-TabButton $tabWildix "Redemarrage borne/telephone" 20 20 { Restart-WildixPhone }
 
 $form.ShowDialog()
