@@ -1058,7 +1058,7 @@ function Check-CriticalServices {
         return
     }
 
-    # Creer une interface pour choisir les services e redemarrer
+    # Creer une interface pour choisir les services a redemarrer
     $form = New-Object System.Windows.Forms.Form
     $form.Text = "Demarrer les services arretes"
     $form.Size = New-Object System.Drawing.Size(400, 300)
@@ -1284,6 +1284,50 @@ function Show-OutlookProfilesWithRepair {
     }
 }
 
+function Get-SystemInfoPlus {
+    $output = @{}
+
+    # Infos système
+    $os = Get-CimInstance -ClassName Win32_OperatingSystem
+    $computer = Get-CimInstance -ClassName Win32_ComputerSystem
+    $bios = Get-CimInstance -ClassName Win32_BIOS
+    $cpu = Get-CimInstance -ClassName Win32_Processor
+    $gpu = Get-CimInstance -ClassName Win32_VideoController
+    $mem = Get-CimInstance -ClassName Win32_PhysicalMemory
+    $disk = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DriveType=3"
+    $net = Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration | Where-Object { $_.IPEnabled -eq $true }
+
+    # Résumé
+    $output["Nom de l'ordinateur"] = $env:COMPUTERNAME
+    $output["Utilisateur actuel"] = $env:USERNAME
+    $output["Administrateur ?"] = if ((New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { "Oui" } else { "Non" }
+
+    $output["Nom de l'OS"] = $os.Caption
+    $output["Version OS"] = $os.Version
+    $output["Architecture"] = $os.OSArchitecture
+    $output["Fabricant"] = $computer.Manufacturer
+    $output["Modèle"] = $computer.Model
+    $output["BIOS Version"] = $bios.SMBIOSBIOSVersion
+    $output["CPU"] = $cpu.Name
+    $output["Cœurs physiques"] = $cpu.NumberOfCores
+    $output["Cœurs logiques"] = $cpu.NumberOfLogicalProcessors
+    $output["RAM Totale (GB)"] = "{0:N2}" -f ($mem.Capacity | Measure-Object -Sum).Sum / 1GB
+
+    $output["Disques"] = ($disk | ForEach-Object {
+        "$($_.DeviceID) : $([math]::Round($_.Size / 1GB, 2)) GB - Libre: $([math]::Round($_.FreeSpace / 1GB, 2)) GB"
+    }) -join " | "
+
+    $output["Réseau"] = ($net | ForEach-Object {
+        "$($_.Description): IP $($_.IPAddress -join ", "), MAC $($_.MACAddress), Passerelle $($_.DefaultIPGateway -join ', '), DNS $($_.DNSServerSearchOrder -join ', ')"
+    }) -join "`n"
+
+    # Affichage joli
+    Write-Log "`n Informations système complètes :`n" -ForegroundColor Cyan
+    foreach ($key in $output.Keys) {
+        Write-log ("{0,-25} : {1}" -f $key, $output[$key])
+    }
+}
+
 function Restart-WildixPhone {
     # Demande IP
     Add-Type -AssemblyName Microsoft.VisualBasic
@@ -1349,14 +1393,14 @@ New-TabButton $tabDiag "Lister Antivirus installes" 20 140 { Check-Antivirus } "
 
 New-TabButton $tabNettoyage "Nettoyage rapide du systeme" 20 20 { Quick-SystemClean }
 New-TabButton $tabNettoyage "Desinstallation logiciels" 20 80 { Uninstall-TargetedApps }
-New-TabButton $tabMaj "Creer un point de restauration" 400 80 { Create-SystemRestorePoint }
-New-TabButton $tabMaj "Redemarrer le PC (20s)" 20 140 { Restart-PCCountdown }
+New-TabButton $tabNettoyage "Creer un point de restauration" 400 80 { Create-SystemRestorePoint }
+New-TabButton $tabNettoyage "Redemarrer le PC (20s)" 20 140 { Restart-PCCountdown }
 
 New-TabButton $tabBoost "Booster le PC" 20 20 { Boost-PCPerformance }
 
 New-TabButton $tabRapport "Exporter le rapport (HTML)" 20 20 { Export-LogHtml }
 New-TabButton $tabRapport "Verifier services critiques" 400 20 { Check-CriticalServices } "Warning"
-New-TabButton $tabRapport "Informations de ce PC (test)" 20 80 { }
+New-TabButton $tabRapport "Informations de ce PC (test)" 20 80 { Get-SystemInfoPlus }
 
 New-TabButton $tabo365 "Verification la presence Office" 20 20 { Check-OfficeInstallation } "Application"
 New-TabButton $tabo365 "Reparation Office" 20 80 { Repair-OfficeClickToRun }
