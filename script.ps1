@@ -1,3 +1,4 @@
+
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
@@ -25,13 +26,15 @@ $tabControl.Add_DrawItem({
     param($sender, $e)
 
     $brush = switch ($e.Index) {
-        0 { [System.Drawing.Brushes]::Gold }
-        1 { [System.Drawing.Brushes]::Orange }
-        2 { [System.Drawing.Brushes]::PaleVioletRed }
-        3 { [System.Drawing.Brushes]::MediumPurple }
-        4 { [System.Drawing.Brushes]::LightBlue }
-        5 { [System.Drawing.Brushes]::DarkSeaGreen }
-        6 { [System.Drawing.Brushes]::DarkSeaGreen }
+        0 { [System.Drawing.Brushes]::lime }
+        1 { [System.Drawing.Brushes]::ForestGreen }
+        2 { [System.Drawing.Brushes]::DarkSeaGreen }
+        3 { [System.Drawing.Brushes]::GreenYellow }
+        4 { [System.Drawing.Brushes]::MediumSpringGreen}
+        5 { [System.Drawing.Brushes]::LightGreen }
+        6 { [System.Drawing.Brushes]::RoyalBlue }
+        7 { [System.Drawing.Brushes]::SlateBlue }
+        8 { [System.Drawing.Brushes]::Crimson }
         default { [System.Drawing.Brushes]::DarkSeaGreen }
     }
 
@@ -47,15 +50,17 @@ $tabControl.Add_DrawItem({
 
 
 
-$tabMaj = New-ColoredTabPage "Mise a jour" ([System.Drawing.Color]::LightGoldenrodYellow)
-$tabDiag = New-ColoredTabPage "Diagnostic" ([System.Drawing.Color]::LightSalmon)
-$tabNettoyage = New-ColoredTabPage "Nettoyage" ([System.Drawing.Color]::LightCoral)
-$tabBoost = New-ColoredTabPage "Boost" ([System.Drawing.Color]::Lavender)
-$tabRapport = New-ColoredTabPage "Rapports" ([System.Drawing.Color]::LightBlue)
-$tabo365 = New-ColoredTabPage "Office 365" ([System.Drawing.Color]::DarkSeaGreen)
-$tabWildix = New-ColoredTabPage "Wildix" ([System.Drawing.Color]::DarkSeaGreen)
+$tabMaj = New-ColoredTabPage "Mise a jour" ([System.Drawing.Color]::lime)
+$tabDiag = New-ColoredTabPage "Diagnostic" ([System.Drawing.Color]::ForestGreen)
+$tabNettoyage = New-ColoredTabPage "Nettoyage" ([System.Drawing.Color]::DarkSeaGreen)
+$tabBoost = New-ColoredTabPage "Boost" ([System.Drawing.Color]::GreenYellow)
+$tabRapport = New-ColoredTabPage "Rapports" ([System.Drawing.Color]::MediumSpringGreen)
+$tabo365 = New-ColoredTabPage "Office 365" ([System.Drawing.Color]::LightGreen)
+$tabWildix = New-ColoredTabPage "Wildix" ([System.Drawing.Color]::RoyalBlue)
+$tabInfos = New-ColoredTabPage "Informations" ([System.Drawing.Color]::SlateBlue)
+$tabRouteur = New-ColoredTabPage "Routeur" ([System.Drawing.Color]::Crimson)
 
-$tabControl.TabPages.AddRange(@($tabMaj, $tabDiag, $tabNettoyage, $tabBoost, $tabRapport, $tabo365, $tabWildix))
+$tabControl.TabPages.AddRange(@($tabMaj, $tabDiag, $tabNettoyage, $tabBoost, $tabRapport, $tabo365, $tabWildix, $tabInfos, $tabRouteur))
 $form.Controls.Add($tabControl)
 
 $textBoxLogs = New-Object System.Windows.Forms.RichTextBox -Property @{
@@ -160,19 +165,29 @@ function Write-LogOk {
     $textBoxLogs.ScrollToCaret()
 }
 
+function Write-LogInfo {
+    param([string]$message)
+    $timestamp = (Get-Date).ToString("HH:mm:ss")
+    $textBoxLogs.SelectionColor = [System.Drawing.Color]::Cyan
+    $textBoxLogs.AppendText("[$timestamp] $message`r`n")
+    $textBoxLogs.SelectionColor = $textBoxLogs.ForeColor
+    $textBoxLogs.SelectionStart = $textBoxLogs.Text.Length
+    $textBoxLogs.ScrollToCaret()
+}
+
 
 function Scan-WindowsUpdate {
     try {
         Write-Log "Scan Windows Update..."
         $serviceWU = Get-Service -Name wuauserv -ErrorAction Stop
         Write-Log "Service Windows Update : $($serviceWU.Status)"
-	Animate-ProgressBar -progressBar $progressBar -durationSeconds 7
+	    Animate-ProgressBar -progressBar $progressBar -durationSeconds 4
         $session = New-Object -ComObject Microsoft.Update.Session
         $searcher = $session.CreateUpdateSearcher()
         $results = $searcher.Search("IsInstalled=0 and Type='Software'").Updates
 
         if ($results.Count -eq 0) {
-            Write-LogOk "Aucune mise e jour disponible."
+            Write-LogOk "Aucune mise a jour disponible."
             return
         }
 
@@ -182,12 +197,12 @@ function Scan-WindowsUpdate {
             $updateList += "$($i+1). $title`n"
         }
 
-        Write-LogAvert "Mises e jour disponibles :"
+        Write-LogAvert "Mises a jour disponibles :"
         Write-Log $updateList.Trim()
 
         $dialogResult = [System.Windows.Forms.MessageBox]::Show(
-            "Les mises e jour suivantes sont disponibles :`n`n$updateList`nVoulez-vous les installer ?",
-            "Mises e jour detectees",
+            "Les mises a jour suivantes sont disponibles :`n`n$updateList`nVoulez-vous les installer ?",
+            "Mises a jour detectees",
             [System.Windows.Forms.MessageBoxButtons]::YesNo,
             [System.Windows.Forms.MessageBoxIcon]::Question
         )
@@ -195,17 +210,19 @@ function Scan-WindowsUpdate {
         if ($dialogResult -eq [System.Windows.Forms.DialogResult]::Yes) {
             $downloader = $session.CreateUpdateDownloader()
             $downloader.Updates = $results
-            Write-Log "Telechargement des mises e jour..."
+            Write-Log "Telechargement des mises a jour..."
+            Animate-ProgressBar -progressBar $progressBar -durationSeconds 2
             $downloader.Download()
-
+            
             $installer = $session.CreateUpdateInstaller()
             $installer.Updates = $results
-            Write-Log "Installation des mises e jour..."
+            Write-Log "Installation des mises a jour..."
+            Animate-ProgressBar -progressBar $progressBar -durationSeconds 2
             $result = $installer.Install()
 
             Write-LogOk "Resultat de l'installation : $($result.ResultCode)"
         } else {
-            Write-LogAvert "Installation des mises e jour annulee par l'utilisateur."
+            Write-LogAvert "Installation des mises a jour annulee par l'utilisateur."
         }
     } catch {
         Write-LogError "Erreur durant le scan Windows Update : $_"
@@ -218,19 +235,23 @@ function Repair-WindowsUpdate {
     try {
         # Arret des services necessaires
         Write-Log "Arret des services wuauserv et bits..."
+        Animate-ProgressBar -progressBar $progressBar -durationSeconds 2
         Stop-Service wuauserv -Force -ErrorAction SilentlyContinue
         Stop-Service bits -Force -ErrorAction SilentlyContinue
 
         # Suppression du cache de MAJ
         Write-Log "Suppression du contenu de SoftwareDistribution..."
+        Animate-ProgressBar -progressBar $progressBar -durationSeconds 3
         Remove-Item -Path "C:\Windows\SoftwareDistribution" -Recurse -Force -ErrorAction SilentlyContinue
 
         # Suppression de catroot2 (base de validation cryptographique)
         Write-Log "Suppression du dossier catroot2..."
+        Animate-ProgressBar -progressBar $progressBar -durationSeconds 3
         Remove-Item -Path "C:\Windows\System32\catroot2" -Recurse -Force -ErrorAction SilentlyContinue
 
         # Reenregistrement des composants Update (optionnel mais utile)
         Write-Log "Reenregistrement des DLLs Windows Update..."
+        Animate-ProgressBar -progressBar $progressBar -durationSeconds 2
         $dlls = @("atl.dll","urlmon.dll","mshtml.dll","shdocvw.dll","browseui.dll","jscript.dll","vbscript.dll","scrrun.dll","msxml.dll","msxml3.dll","msxml6.dll","wuapi.dll","wuaueng.dll","wucltui.dll","wups.dll","wups2.dll","wuweb.dll","qmgr.dll","qmgrprxy.dll","wuaueng1.dll")
         foreach ($dll in $dlls) {
             regsvr32 /s $dll 2>$null
@@ -238,6 +259,7 @@ function Repair-WindowsUpdate {
 
         # Redemarrage des services
         Write-Log "Redemarrage des services..."
+        Animate-ProgressBar -progressBar $progressBar -durationSeconds 4
         Start-Service bits -ErrorAction SilentlyContinue
         Start-Service wuauserv -ErrorAction SilentlyContinue
 
@@ -249,14 +271,14 @@ function Repair-WindowsUpdate {
 
 
 function Force-WindowsUpdateDetection {
-    Write-Log "Detection des mises e jour forcee..."
+    Write-Log "Detection des mises a jour forcee..."
 
     try {
         $process = Start-Process -FilePath "UsoClient.exe" -ArgumentList "StartScan" -NoNewWindow -PassThru -ErrorAction Stop
         $process.WaitForExit()
 
         if ($process.ExitCode -eq 0) {
-            Write-LogOk "Detection des mises e jour lancee avec succes."
+            Write-LogOk "Detection des mises a jour lancee avec succes."
         } else {
             Write-LogAvert "Commande UsoClient terminee avec un code inattendu : $($process.ExitCode)"
         }
@@ -268,23 +290,23 @@ function Force-WindowsUpdateDetection {
 
 function Restart-PCCountdown {
     $result = [System.Windows.Forms.MessageBox]::Show(
-        "Voulez-vous redemarrer leordinateur dans 20 secondes ?`nVous pouvez encore annuler avec shutdown /a.",
+        "Voulez-vous redemarrer leordinateur dans 10 secondes ?`nVous pouvez encore annuler avec shutdown /a.",
         "Confirmation de redemarrage",
         [System.Windows.Forms.MessageBoxButtons]::YesNo,
         [System.Windows.Forms.MessageBoxIcon]::Warning
     )
 
     if ($result -eq [System.Windows.Forms.DialogResult]::Yes) {
-        shutdown /r /t 20
-        Write-Log "Redemarrage programme dans 20 secondes."
+        shutdown /r /t 10
+        Write-Log "Redemarrage programme dans 10 secondes."
         [System.Windows.Forms.MessageBox]::Show(
-            "Le redemarrage est prevu dans 20 secondes.`nUtilisez shutdown /a pour l'annuler.",
+            "Le redemarrage est prevu dans 10 secondes.`nUtilisez shutdown /a pour l'annuler.",
             "Redemarrage en attente",
             [System.Windows.Forms.MessageBoxButtons]::OK,
             [System.Windows.Forms.MessageBoxIcon]::Information
         )
     } else {
-        Write-Log "Redemarrage annule par leutilisateur."
+        Write-Log "Redemarrage annule par l'utilisateur."
     }
 }
 
@@ -292,7 +314,8 @@ function Restart-PCCountdown {
 function Create-SystemRestorePoint {
     try {
         Write-Log "Creation point de restauration systeme..."
-        Checkpoint-Computer -Description "Point_Restauration_Outil_IT" -RestorePointType "MODIFY_SETTINGS"
+        Checkpoint-Computer -Description "Point_Restauration_Outil_IT_ClicOnLine" -RestorePointType "MODIFY_SETTINGS"
+        Animate-ProgressBar -progressBar $progressBar -durationSeconds 2
         Write-LogOk "Point de restauration cree."
     } catch {
         Write-LogError "Erreur creation point de restauration : $_"
@@ -320,6 +343,7 @@ function Scan-InstalledApps {
 
 function Check-ObsoleteDrivers {
     Write-Log "Scan des pilotes obsoletes..."
+    Animate-ProgressBar -progressBar $progressBar -durationSeconds 2
 
     $drivers = Get-WmiObject Win32_PnPSignedDriver -ErrorAction SilentlyContinue
     $limitDate = (Get-Date).AddYears(-2)
@@ -372,7 +396,7 @@ function Check-ObsoleteDrivers {
 
 function Show-NetworkConnections {
     Write-Log "Analyse des connexions reseau actives..."
-    Animate-ProgressBar -progressBar $progressBar -durationSeconds 4
+    Animate-ProgressBar -progressBar $progressBar -durationSeconds 2
 
     try {
         $lines = netstat -anob 2>$null
@@ -425,12 +449,6 @@ function Show-NetworkConnections {
     }
 }
 
-
-function Test-IsAdmin {
-    $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
-    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-}
 
 function Show-SystemHealthDashboard {
     Write-Log "etat de sante du systeme :"
@@ -500,15 +518,181 @@ function Show-SystemHealthDashboard {
 
 
 function Check-Antivirus {
-    $antivirus = Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct -ErrorAction SilentlyContinue
-    if ($antivirus) {
-        foreach ($av in $antivirus) {
-            Write-Log "Antivirus : $($av.displayName)"
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
+
+    # Fonction de téléchargement robuste de NRnR
+    function Download-NortonTool {
+        $nortonToolUrl = "https://download.norton.com/nbr/NRnR.exe"
+        $nortonToolPath = "$env:TEMP\NRnR.exe"
+
+        Write-Log "Tentative de téléchargement de l’outil Norton..."
+
+        # Méthode 1 : BITS
+        try {
+            Start-BitsTransfer -Source $nortonToolUrl -Destination $nortonToolPath -ErrorAction Stop
+            Write-LogOk "Téléchargement via BITS réussi."
+            return $nortonToolPath
+        } catch {
+            Write-LogAvert "BITS échoué : $_"
         }
-    } else {
-        Write-LogAvert "Aucun antivirus detecte."
+
+        # Méthode 2 : curl.exe
+        try {
+            $curl = "$env:SystemRoot\System32\curl.exe"
+            if (Test-Path $curl) {
+                $pinfo = New-Object System.Diagnostics.ProcessStartInfo
+                $pinfo.FileName = $curl
+                $pinfo.Arguments = "-L -o `"$nortonToolPath`" `"$nortonToolUrl`""
+                $pinfo.RedirectStandardOutput = $true
+                $pinfo.UseShellExecute = $false
+                $pinfo.CreateNoWindow = $true
+                $proc = [System.Diagnostics.Process]::Start($pinfo)
+                $proc.WaitForExit()
+                if (Test-Path $nortonToolPath) {
+                    Write-LogOk "Téléchargement via curl réussi."
+                    return $nortonToolPath
+                }
+            }
+        } catch {
+            Write-LogAvert "curl échoué : $_"
+        }
+
+        # Méthode 3 : Invoke-WebRequest
+        try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls11
+            Invoke-WebRequest -Uri $nortonToolUrl -OutFile $nortonToolPath -UseBasicParsing
+            Write-LogOk "Téléchargement via Invoke-WebRequest réussi."
+            return $nortonToolPath
+        } catch {
+            Write-LogError "Toutes les méthodes de téléchargement ont échoué : $_"
+            return $null
+        }
+    }
+
+    # Désinstallation Norton via NRnR
+    function Force-Uninstall-Norton {
+        $nortonToolPath = Download-NortonTool
+        if (-not $nortonToolPath) {
+            Write-LogError "Échec complet du téléchargement de l’outil Norton. Abandon."
+            return
+        }
+
+        Write-Log "Exécution de l’outil Norton en mode suppression silencieuse..."
+        try {
+            Start-Process -FilePath $nortonToolPath -ArgumentList "/Silent /RemoveOnly" -Wait -NoNewWindow
+            Write-LogOk "Norton désinstallé avec succès."
+        } catch {
+            Write-LogError "Erreur pendant la désinstallation de Norton : $_"
+        }
+
+        Remove-Item -Path $nortonToolPath -Force -ErrorAction SilentlyContinue
+    }
+
+    # Détection des antivirus
+    $antivirus = Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct -ErrorAction SilentlyContinue
+    if (-not $antivirus) {
+        Write-LogAvert "Aucun antivirus détecté."
+        return
+    }
+
+    $uninstallPaths = @(
+        "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*",
+        "HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+    )
+
+    $avList = @()
+    foreach ($av in $antivirus) {
+        $name = $av.displayName
+        $match = $null
+
+        foreach ($regPath in $uninstallPaths) {
+            $entries = Get-ItemProperty $regPath -ErrorAction SilentlyContinue
+            foreach ($entry in $entries) {
+                if ($entry.DisplayName -and $entry.DisplayName -like "*$name*") {
+                    $match = $entry
+                    break
+                }
+            }
+            if ($match) { break }
+        }
+
+        $avList += [PSCustomObject]@{
+            Nom             = $name
+            UninstallString = if ($match) { $match.UninstallString } else { $null }
+        }
+    }
+
+    # Interface graphique
+    $form = New-Object System.Windows.Forms.Form
+    $form.Text = "Désinstallation des antivirus"
+    $form.Size = New-Object System.Drawing.Size(480, 350)
+    $form.StartPosition = "CenterScreen"
+    $form.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+
+    $list = New-Object System.Windows.Forms.CheckedListBox
+    $list.Size = New-Object System.Drawing.Size(440, 220)
+    $list.Location = New-Object System.Drawing.Point(10, 10)
+    $list.CheckOnClick = $true
+
+    foreach ($av in $avList) {
+        $list.Items.Add($av.Nom)
+    }
+
+    $form.Controls.Add($list)
+
+    $btnOK = New-Object System.Windows.Forms.Button
+    $btnOK.Text = "Désinstaller"
+    $btnOK.Location = New-Object System.Drawing.Point(260, 250)
+    $btnOK.Add_Click({ $form.DialogResult = [System.Windows.Forms.DialogResult]::OK; $form.Close() })
+    $form.Controls.Add($btnOK)
+
+    $btnCancel = New-Object System.Windows.Forms.Button
+    $btnCancel.Text = "Annuler"
+    $btnCancel.Location = New-Object System.Drawing.Point(130, 250)
+    $btnCancel.Add_Click({ $form.DialogResult = [System.Windows.Forms.DialogResult]::Cancel; $form.Close() })
+    $form.Controls.Add($btnCancel)
+
+    if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
+        Write-Log "Désinstallation annulée par l'utilisateur."
+        return
+    }
+
+    $selected = $list.CheckedItems
+    if ($selected.Count -eq 0) {
+        Write-LogAvert "Aucun antivirus sélectionné pour suppression."
+        return
+    }
+
+    foreach ($nom in $selected) {
+        $av = $avList | Where-Object { $_.Nom -eq $nom } | Select-Object -First 1
+        if ($av.UninstallString) {
+            try {
+                Write-Log "Désinstallation de $($av.Nom)..."
+                $cmd = $av.UninstallString
+
+                if ($cmd -match '^\"(.+?)\"') {
+                    $exe = $matches[1]
+                    $args = $cmd.Substring($exe.Length + 2)
+                } else {
+                    $exe = $cmd.Split(" ")[0]
+                    $args = $cmd.Substring($exe.Length)
+                }
+
+                Start-Process -FilePath $exe -ArgumentList $args -NoNewWindow -Wait -ErrorAction Stop
+                Write-LogOk "$($av.Nom) désinstallé avec succès."
+            } catch {
+                Write-LogError "Erreur lors de la suppression de $($av.Nom) : $_"
+            }
+        } elseif ($av.Nom -like "*Norton*") {
+            Write-LogAvert "Norton détecté sans commande de désinstallation. Utilisation de l’outil officiel..."
+            Force-Uninstall-Norton
+        } else {
+            Write-LogAvert "Aucune commande de désinstallation trouvée pour $($av.Nom)"
+        }
     }
 }
+
 
 function Quick-SystemClean {
     $paths = @("$env:TEMP", "$env:WINDIR\Temp", "$env:WINDIR\Prefetch", "$env:WINDIR\SoftwareDistribution\Download")
@@ -627,7 +811,7 @@ function Boost-PCPerformance {
                     $btnDisable.Add_Click({
                         foreach ($entry in $listView.Items) {
                             if ($entry.Checked -eq $false) {
-                                Write-LogAvert "e desactiver manuellement : $($entry.Text)"
+                                Write-LogAvert "Applications desactiver manuellement : $($entry.Text)"
                                 # Pas d'API directe fiable pour les desactiver (demande teche planifiee ou registry selon contexte)
                             }
                         }
@@ -643,11 +827,12 @@ function Boost-PCPerformance {
         }
     }
 
-    Write-Log "Optimisation terminee."
+    Write-LogOk "Optimisation terminee."
 }
 
 function Uninstall-TargetedApps {
-    $appsToRemove = @("OneDrive", "Java", "Driver Booster", "MacAfee")  # Liste de mots-cles e filtrer
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
 
     $registryPaths = @(
         "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*",
@@ -659,31 +844,28 @@ function Uninstall-TargetedApps {
     foreach ($path in $registryPaths) {
         $entries = Get-ItemProperty $path -ErrorAction SilentlyContinue
         foreach ($entry in $entries) {
-            foreach ($pattern in $appsToRemove) {
-                if ($entry.DisplayName -and $entry.DisplayName -like "*$pattern*") {
-                    if (-not ($foundApps | Where-Object { $_.DisplayName -eq $entry.DisplayName })) {
-                        $foundApps += $entry
-                    }
-                    break
+            if ($entry.DisplayName -and $entry.UninstallString) {
+                if (-not ($foundApps | Where-Object { $_.DisplayName -eq $entry.DisplayName })) {
+                    $foundApps += $entry
                 }
             }
         }
     }
 
     if ($foundApps.Count -eq 0) {
-        Write-LogOk "Aucune application ciblee trouvee pour desinstallation."
+        Write-Host "Aucune application trouvée pour désinstallation."
         return
     }
 
-    # Creation de la fenetre de selection
+    # Interface graphique
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = "Desinstallation ciblee"
-    $form.Size = New-Object System.Drawing.Size(500, 400)
-    $form.StartPosition = "CenterParent"
+    $form.Text = "Sélectionnez les applications à désinstaller"
+    $form.Size = New-Object System.Drawing.Size(500, 450)
+    $form.StartPosition = "CenterScreen"
     $form.Font = New-Object System.Drawing.Font("Segoe UI", 10)
 
     $list = New-Object System.Windows.Forms.CheckedListBox
-    $list.Size = New-Object System.Drawing.Size(460, 280)
+    $list.Size = New-Object System.Drawing.Size(460, 320)
     $list.Location = New-Object System.Drawing.Point(10, 10)
     $list.CheckOnClick = $true
 
@@ -697,25 +879,25 @@ function Uninstall-TargetedApps {
     $form.Controls.Add($list)
 
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Text = "Desinstaller"
-    $btnOK.Location = New-Object System.Drawing.Point(280, 310)
+    $btnOK.Text = "Désinstaller"
+    $btnOK.Location = New-Object System.Drawing.Point(280, 350)
     $btnOK.Add_Click({ $form.DialogResult = [System.Windows.Forms.DialogResult]::OK; $form.Close() })
     $form.Controls.Add($btnOK)
 
     $btnCancel = New-Object System.Windows.Forms.Button
     $btnCancel.Text = "Annuler"
-    $btnCancel.Location = New-Object System.Drawing.Point(140, 310)
+    $btnCancel.Location = New-Object System.Drawing.Point(140, 350)
     $btnCancel.Add_Click({ $form.DialogResult = [System.Windows.Forms.DialogResult]::Cancel; $form.Close() })
     $form.Controls.Add($btnCancel)
 
     if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Desinstallation annulee par leutilisateur."
+        Write-Log "Désinstallation annulée par l'utilisateur."
         return
     }
 
     $selected = $list.CheckedItems
     if ($selected.Count -eq 0) {
-        Write-LogAvert "Aucune application selectionnee pour desinstallation."
+        Write-LogAvert "Aucune application sélectionnée pour désinstallation."
         return
     }
 
@@ -724,7 +906,7 @@ function Uninstall-TargetedApps {
         if ($app -and $app.UninstallString) {
             try {
                 $cmd = $app.UninstallString
-                Write-Log "Desinstallation de $($app.DisplayName)..."
+                Write-LogOk "Désinstallation de $($app.DisplayName)..."
 
                 if ($cmd -match '^\"(.+?)\"') {
                     $exe = $matches[1]
@@ -735,120 +917,111 @@ function Uninstall-TargetedApps {
                 }
 
                 Start-Process -FilePath $exe -ArgumentList $args -NoNewWindow -Wait -ErrorAction Stop
-                Write-LogOk "$($app.DisplayName) desinstalle."
+                Write-LogOk "$($app.DisplayName) désinstallée avec succès."
             } catch {
-                Write-LogError "Erreur suppression de $($app.DisplayName) : $_"
+                Write-LogError "Erreur lors de la désinstallation de $($app.DisplayName) : $_"
             }
         } else {
-            Write-LogAvert "Pas de commande de desinstallation pour $name"
+            Write-LogInfo "Pas de commande de désinstallation trouvée pour $name"
         }
     }
 }
 
 
-function Uninstall-Bitdefender {
-    Write-Log "Suppression de Bitdefender..."
-    Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -like "*Bitdefender*" } | ForEach-Object {
-        $_.Uninstall() | Out-Null
-        Write-Log "$($_.Name) desinstalle."
-    }
-}
-
 function Update-Apps {
-    # Fenetre de selection
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
+
+    Write-Log "Recherche des mises à jour disponibles..."
+
+    try {
+        $updates = winget upgrade --accept-source-agreements --accept-package-agreements | Select-String "^[^\s]+\s+[^\s]+\s+[^\s]+"
+    } catch {
+        Write-LogError "Erreur lors de la récupération des mises à jour : $_"
+        return
+    }
+
+    if (!$updates -or $updates.Count -eq 0) {
+        Write-LogOk "Aucune mise à jour disponible détectée."
+        return
+    }
+
+    $appList = @()
+    foreach ($line in $updates) {
+        $columns = ($line -replace '\s{2,}', '|').Split('|')
+        if ($columns.Length -ge 3) {
+            $appList += [PSCustomObject]@{
+                Nom     = $columns[0].Trim()
+                Id      = $columns[1].Trim()
+                Version = $columns[2].Trim()
+            }
+        }
+    }
+
+    if ($appList.Count -eq 0) {
+        Write-LogOk "Aucune mise à jour détectée après traitement."
+        return
+    }
+
+    # Interface graphique
     $formUpdate = New-Object System.Windows.Forms.Form
-    $formUpdate.Text = "Mise e jour des applications"
-    $formUpdate.Size = New-Object System.Drawing.Size(360,220)
-    $formUpdate.StartPosition = "CenterParent"
+    $formUpdate.Text = "Mises à jour disponibles"
+    $formUpdate.Size = New-Object System.Drawing.Size(500, 450)
+    $formUpdate.StartPosition = "CenterScreen"
     $formUpdate.Font = New-Object System.Drawing.Font("Segoe UI", 10)
 
     $checkList = New-Object System.Windows.Forms.CheckedListBox
-    $checkList.Size = New-Object System.Drawing.Size(320,100)
-    $checkList.Location = New-Object System.Drawing.Point(10,10)
+    $checkList.Size = New-Object System.Drawing.Size(460, 320)
+    $checkList.Location = New-Object System.Drawing.Point(10, 10)
     $checkList.CheckOnClick = $true
-    $checkList.Items.AddRange(@("Google Chrome", "Adobe Acrobat Reader"))
+
+    foreach ($app in $appList) {
+        $checkList.Items.Add("$($app.Nom) ($($app.Version))")
+    }
+
     $formUpdate.Controls.Add($checkList)
 
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Text = "Lancer la mise e jour"
-    $btnOK.Location = New-Object System.Drawing.Point(180,120)
+    $btnOK.Text = "Mettre à jour"
+    $btnOK.Location = New-Object System.Drawing.Point(280, 350)
     $btnOK.Add_Click({ $formUpdate.DialogResult = [System.Windows.Forms.DialogResult]::OK; $formUpdate.Close() })
     $formUpdate.Controls.Add($btnOK)
 
     $btnCancel = New-Object System.Windows.Forms.Button
     $btnCancel.Text = "Annuler"
-    $btnCancel.Location = New-Object System.Drawing.Point(60,120)
+    $btnCancel.Location = New-Object System.Drawing.Point(140, 350)
     $btnCancel.Add_Click({ $formUpdate.DialogResult = [System.Windows.Forms.DialogResult]::Cancel; $formUpdate.Close() })
     $formUpdate.Controls.Add($btnCancel)
 
     if ($formUpdate.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Mise e jour annulee par leutilisateur."
+        Write-LogAvert "Mise à jour annulée par l'utilisateur."
         return
     }
 
-    # Fonction interne pour version Chrome
-    function Get-ChromeVersion {
-        $paths = @(
-            "${env:ProgramFiles(x86)}\\Google\\Chrome\\Application\\chrome.exe",
-            "${env:ProgramFiles}\\Google\\Chrome\\Application\\chrome.exe"
-        )
-        foreach ($p in $paths) {
-            if (Test-Path $p) {
-                return (Get-Item $p).VersionInfo.ProductVersion
-            }
-        }
-        return "Inconnue"
+    $selected = $checkList.CheckedItems
+    if ($selected.Count -eq 0) {
+        Write-LogAvert "Aucune application sélectionnée pour mise à jour."
+        return
     }
 
-    # MAJ Chrome
-    if ($checkList.CheckedItems -contains "Google Chrome") {
-        Write-Log "Mise e jour de Google Chrome..."
-        $oldVersion = Get-ChromeVersion
-        Write-Log "Version actuelle de Chrome : $oldVersion"
+    foreach ($item in $selected) {
+        $name = $item -replace '\s\([^)]+\)$', ''
+        $targetApp = $appList | Where-Object { $_.Nom -eq $name }
+        if ($targetApp) {
+            try {
+                Write-LogOk "Mise à jour de $($targetApp.Nom)..."
+                $result = winget upgrade --id "$($targetApp.Id)" --silent --accept-source-agreements --accept-package-agreements 2>&1
 
-        try {
-            Get-Process -Name chrome -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-            Start-Sleep -Seconds 2
-            Write-LogOk "Chrome arrete avant mise e jour."
-        } catch {
-            Write-LogAvert "Chrome non detecte ou echec e l'arret."
-        }
-
-        try {
-            $chromeResult = winget upgrade --id Google.Chrome --silent --accept-source-agreements --accept-package-agreements 2>&1
-            if ($chromeResult -match "No applicable update found" -or $chromeResult -match "Aucune mise") {
-                Write-LogOk "Chrome est deje e jour."
-            } elseif ($chromeResult -match "error|echec|failed") {
-                Write-LogError "Erreur mise e jour Chrome : $chromeResult"
-            } else {
-                Write-LogOk "Mise e jour Chrome terminee."
+                if ($result -match "No applicable update found" -or $result -match "Aucune mise") {
+                    Write-LogInfo "$($targetApp.Nom) est déjà à jour."
+                } elseif ($result -match "error|echec|failed") {
+                    Write-LogError "Erreur mise à jour $($targetApp.Nom) : $result"
+                } else {
+                    Write-LogOk "$($targetApp.Nom) mise à jour terminée."
+                }
+            } catch {
+                Write-LogError "Exception mise à jour $($targetApp.Nom) : $_"
             }
-        } catch {
-            Write-LogError "Exception mise e jour Chrome : $_"
-        }
-
-        $newVersion = Get-ChromeVersion
-        if ($newVersion -ne $oldVersion) {
-            Write-LogOk "Chrome mis e jour : $oldVersion ? $newVersion"
-        } else {
-            Write-Log "Version Chrome inchangee apres MAJ : $newVersion"
-        }
-    }
-
-    # MAJ Adobe
-    if ($checkList.CheckedItems -contains "Adobe Acrobat Reader") {
-        Write-Log "Mise e jour d'Adobe Acrobat Reader..."
-        try {
-            $adobeResult = winget upgrade --id Adobe.Acrobat.Reader.64-bit --silent --accept-source-agreements --accept-package-agreements 2>&1
-            if ($adobeResult -match "No applicable update found" -or $adobeResult -match "Aucune mise") {
-                Write-LogOk "Adobe Reader est deje e jour."
-            } elseif ($adobeResult -match "error|echec|failed") {
-                Write-LogError "Erreur mise e jour Adobe : $adobeResult"
-            } else {
-                Write-LogOk "Mise e jour Adobe Reader terminee."
-            }
-        } catch {
-            Write-LogError "Exception mise e jour Adobe : $_"
         }
     }
 }
@@ -1161,13 +1334,12 @@ function Restart-WildixPhone {
 }
 
 
-
 # Boutons
 New-TabButton $tabMaj "Scanner Windows Update" 20 20 { Scan-WindowsUpdate } "Information"
-New-TabButton $tabMaj "Reinitialiser Windows Update" 400 20 { Repair-WindowsUpdate }
-New-TabButton $tabMaj "Forcer Windows Update" 20 80 { Force-WindowsUpdateDetection }
-New-TabButton $tabMaj "Creer un point de restauration" 400 80 { Create-SystemRestorePoint }
-New-TabButton $tabMaj "Redemarrer le PC (20s)" 20 140 { Restart-PCCountdown }
+New-TabButton $tabMaj "Reinitialiser Windows Update" 20 80 { Repair-WindowsUpdate }
+New-TabButton $tabMaj "Forcer Windows Update" 400 20 { Force-WindowsUpdateDetection }
+New-TabButton $tabMaj "Installer Winget (si absent)" 400 80 { Install-WingetIfMissing }
+New-TabButton $tabMaj "Mise a jour logiciels" 20 140 { Update-Apps }
 
 New-TabButton $tabDiag "Scanner Logiciels Installes" 20 20 { Scan-InstalledApps } "Question"
 New-TabButton $tabDiag "Verifier pilotes obsoletes" 400 20 { Check-ObsoleteDrivers } 
@@ -1176,15 +1348,15 @@ New-TabButton $tabDiag "Tableau de bord sante PC" 400 80 { Show-SystemHealthDash
 New-TabButton $tabDiag "Lister Antivirus installes" 20 140 { Check-Antivirus } "Shield"
 
 New-TabButton $tabNettoyage "Nettoyage rapide du systeme" 20 20 { Quick-SystemClean }
-New-TabButton $tabNettoyage "Desinstaller applis nefaste" 20 80 { Uninstall-TargetedApps }
-New-TabButton $tabNettoyage "Desinstaller Bitdefender (test)" 400 80 { Uninstall-Bitdefender } "Warning"
-New-TabButton $tabNettoyage "Mettre a jour applis" 20 140 { Update-Apps }
+New-TabButton $tabNettoyage "Desinstallation logiciels" 20 80 { Uninstall-TargetedApps }
+New-TabButton $tabMaj "Creer un point de restauration" 400 80 { Create-SystemRestorePoint }
+New-TabButton $tabMaj "Redemarrer le PC (20s)" 20 140 { Restart-PCCountdown }
 
 New-TabButton $tabBoost "Booster le PC" 20 20 { Boost-PCPerformance }
 
 New-TabButton $tabRapport "Exporter le rapport (HTML)" 20 20 { Export-LogHtml }
 New-TabButton $tabRapport "Verifier services critiques" 400 20 { Check-CriticalServices } "Warning"
-New-TabButton $tabRapport "Installer Winget (si absent)" 20 80 { Install-WingetIfMissing }
+New-TabButton $tabRapport "Informations de ce PC (test)" 20 80 { }
 
 New-TabButton $tabo365 "Verification la presence Office" 20 20 { Check-OfficeInstallation } "Application"
 New-TabButton $tabo365 "Reparation Office" 20 80 { Repair-OfficeClickToRun }
@@ -1193,6 +1365,12 @@ New-TabButton $tabo365 "Vider les dossiers temporaires d'Outlook" 400 20 { Clean
 New-TabButton $tabo365 "Reparation fichier PST/OST" 400 80 { Repair-OutlookPST }
 New-TabButton $tabo365 "Reparation profil" 400 140 { Show-OutlookProfilesWithRepair }
 
-New-TabButton $tabWildix "Redemarrage borne/telephone" 20 20 { Restart-WildixPhone }
+New-TabButton $tabWildix "Redemarrage borne/telephone (test)" 20 20 { Restart-WildixPhone }
+
+New-TabButton $tabInfos "Informations de ce PC (test)" 190 80 { }
+
+New-TabButton $tabRouteur "Redemarrage routeur DrayTech (test)" 20 20 {  }
+New-TabButton $tabRouteur "Redemarrage routeur TP-Link (test)" 20 80 {  }
+New-TabButton $tabRouteur "Redemarrage routeur Mikrotik (test)" 20 140 {  }
 
 $form.ShowDialog()
