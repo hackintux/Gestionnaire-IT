@@ -1,4 +1,5 @@
 
+
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
@@ -26,15 +27,15 @@ $tabControl.Add_DrawItem({
     param($sender, $e)
 
     $brush = switch ($e.Index) {
-        0 { [System.Drawing.Brushes]::lime }
-        1 { [System.Drawing.Brushes]::ForestGreen }
-        2 { [System.Drawing.Brushes]::DarkSeaGreen }
-        3 { [System.Drawing.Brushes]::GreenYellow }
-        4 { [System.Drawing.Brushes]::MediumSpringGreen}
-        5 { [System.Drawing.Brushes]::LightGreen }
-        6 { [System.Drawing.Brushes]::RoyalBlue }
-        7 { [System.Drawing.Brushes]::SlateBlue }
-        8 { [System.Drawing.Brushes]::Crimson }
+        0 { [System.Drawing.Brushes]::SteelBlue }
+        1 { [System.Drawing.Brushes]::MediumSeaGreen }
+        2 { [System.Drawing.Brushes]::DarkOrange }
+        3 { [System.Drawing.Brushes]::Gold }
+        4 { [System.Drawing.Brushes]::Gainsboro}
+        5 { [System.Drawing.Brushes]::MediumOrchid }
+        6 { [System.Drawing.Brushes]::Turquoise }
+        7 { [System.Drawing.Brushes]::CornflowerBlue }
+        8 { [System.Drawing.Brushes]::IndianRed }
         default { [System.Drawing.Brushes]::DarkSeaGreen }
     }
 
@@ -50,17 +51,17 @@ $tabControl.Add_DrawItem({
 
 
 
-$tabMaj = New-ColoredTabPage "Mise a jour" ([System.Drawing.Color]::lime)
-$tabDiag = New-ColoredTabPage "Diagnostic" ([System.Drawing.Color]::ForestGreen)
-$tabNettoyage = New-ColoredTabPage "Nettoyage" ([System.Drawing.Color]::DarkSeaGreen)
-$tabBoost = New-ColoredTabPage "Boost" ([System.Drawing.Color]::GreenYellow)
-$tabRapport = New-ColoredTabPage "Rapports" ([System.Drawing.Color]::MediumSpringGreen)
-$tabo365 = New-ColoredTabPage "Office 365" ([System.Drawing.Color]::LightGreen)
-$tabWildix = New-ColoredTabPage "Wildix" ([System.Drawing.Color]::RoyalBlue)
-$tabInfos = New-ColoredTabPage "Informations" ([System.Drawing.Color]::SlateBlue)
-$tabRouteur = New-ColoredTabPage "Routeur" ([System.Drawing.Color]::Crimson)
+$tabMaj = New-ColoredTabPage "Mise a jour" ([System.Drawing.Color]::SteelBlue)
+$tabDiag = New-ColoredTabPage "Diagnostic" ([System.Drawing.Color]::MediumSeaGreen)
+$tabNettoyage = New-ColoredTabPage "Nettoyage" ([System.Drawing.Color]::DarkOrange)
+$tabBoost = New-ColoredTabPage "Boost" ([System.Drawing.Color]::Gold)
+$tabRapport = New-ColoredTabPage "Rapports" ([System.Drawing.Color]::Gainsboro)
+$tabo365 = New-ColoredTabPage "Office 365" ([System.Drawing.Color]::MediumOrchid)
+$tabWildix = New-ColoredTabPage "Wildix" ([System.Drawing.Color]::Turquoise)
+$tabReseaux = New-ColoredTabPage "Reseaux" ([System.Drawing.Color]::CornflowerBlue)
+$tabRouteur = New-ColoredTabPage "Routeur" ([System.Drawing.Color]::IndianRed)
 
-$tabControl.TabPages.AddRange(@($tabMaj, $tabDiag, $tabNettoyage, $tabBoost, $tabRapport, $tabo365, $tabWildix, $tabInfos, $tabRouteur))
+$tabControl.TabPages.AddRange(@($tabMaj, $tabDiag, $tabNettoyage, $tabBoost, $tabRapport, $tabo365, $tabWildix, $tabReseaux, $tabRouteur))
 $form.Controls.Add($tabControl)
 
 $textBoxLogs = New-Object System.Windows.Forms.RichTextBox -Property @{
@@ -521,23 +522,23 @@ function Check-Antivirus {
     Add-Type -AssemblyName System.Windows.Forms
     Add-Type -AssemblyName System.Drawing
 
-    # Fonction de téléchargement robuste de NRnR
+    # Fonction de telechargement robuste de NRnR
     function Download-NortonTool {
         $nortonToolUrl = "https://download.norton.com/nbr/NRnR.exe"
         $nortonToolPath = "$env:TEMP\NRnR.exe"
 
-        Write-Log "Tentative de téléchargement de l’outil Norton..."
+        Write-Log "Tentative de telechargement de l’outil Norton..."
 
-        # Méthode 1 : BITS
+        # Methode 1 : BITS
         try {
             Start-BitsTransfer -Source $nortonToolUrl -Destination $nortonToolPath -ErrorAction Stop
-            Write-LogOk "Téléchargement via BITS réussi."
+            Write-LogOk "Telechargement via BITS reussi."
             return $nortonToolPath
         } catch {
-            Write-LogAvert "BITS échoué : $_"
+            Write-LogAvert "BITS echoue : $_"
         }
 
-        # Méthode 2 : curl.exe
+        # Methode 2 : curl.exe
         try {
             $curl = "$env:SystemRoot\System32\curl.exe"
             if (Test-Path $curl) {
@@ -550,49 +551,49 @@ function Check-Antivirus {
                 $proc = [System.Diagnostics.Process]::Start($pinfo)
                 $proc.WaitForExit()
                 if (Test-Path $nortonToolPath) {
-                    Write-LogOk "Téléchargement via curl réussi."
+                    Write-LogOk "Telechargement via curl reussi."
                     return $nortonToolPath
                 }
             }
         } catch {
-            Write-LogAvert "curl échoué : $_"
+            Write-LogAvert "curl echoue : $_"
         }
 
-        # Méthode 3 : Invoke-WebRequest
+        # Methode 3 : Invoke-WebRequest
         try {
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls11
             Invoke-WebRequest -Uri $nortonToolUrl -OutFile $nortonToolPath -UseBasicParsing
-            Write-LogOk "Téléchargement via Invoke-WebRequest réussi."
+            Write-LogOk "Telechargement via Invoke-WebRequest reussi."
             return $nortonToolPath
         } catch {
-            Write-LogError "Toutes les méthodes de téléchargement ont échoué : $_"
+            Write-LogError "Toutes les methodes de telechargement ont echoue : $_"
             return $null
         }
     }
 
-    # Désinstallation Norton via NRnR
+    # Desinstallation Norton via NRnR
     function Force-Uninstall-Norton {
         $nortonToolPath = Download-NortonTool
         if (-not $nortonToolPath) {
-            Write-LogError "Échec complet du téléchargement de l’outil Norton. Abandon."
+            Write-LogError "echec complet du telechargement de l’outil Norton. Abandon."
             return
         }
 
-        Write-Log "Exécution de l’outil Norton en mode suppression silencieuse..."
+        Write-Log "Execution de l’outil Norton en mode suppression silencieuse..."
         try {
             Start-Process -FilePath $nortonToolPath -ArgumentList "/Silent /RemoveOnly" -Wait -NoNewWindow
-            Write-LogOk "Norton désinstallé avec succès."
+            Write-LogOk "Norton desinstalle avec succes."
         } catch {
-            Write-LogError "Erreur pendant la désinstallation de Norton : $_"
+            Write-LogError "Erreur pendant la desinstallation de Norton : $_"
         }
 
         Remove-Item -Path $nortonToolPath -Force -ErrorAction SilentlyContinue
     }
 
-    # Détection des antivirus
+    # Detection des antivirus
     $antivirus = Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct -ErrorAction SilentlyContinue
     if (-not $antivirus) {
-        Write-LogAvert "Aucun antivirus détecté."
+        Write-LogAvert "Aucun antivirus detecte."
         return
     }
 
@@ -625,7 +626,7 @@ function Check-Antivirus {
 
     # Interface graphique
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = "Désinstallation des antivirus"
+    $form.Text = "Desinstallation des antivirus"
     $form.Size = New-Object System.Drawing.Size(480, 350)
     $form.StartPosition = "CenterScreen"
     $form.Font = New-Object System.Drawing.Font("Segoe UI", 10)
@@ -642,7 +643,7 @@ function Check-Antivirus {
     $form.Controls.Add($list)
 
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Text = "Désinstaller"
+    $btnOK.Text = "Desinstaller"
     $btnOK.Location = New-Object System.Drawing.Point(260, 250)
     $btnOK.Add_Click({ $form.DialogResult = [System.Windows.Forms.DialogResult]::OK; $form.Close() })
     $form.Controls.Add($btnOK)
@@ -654,13 +655,13 @@ function Check-Antivirus {
     $form.Controls.Add($btnCancel)
 
     if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Désinstallation annulée par l'utilisateur."
+        Write-Log "Desinstallation annulee par l'utilisateur."
         return
     }
 
     $selected = $list.CheckedItems
     if ($selected.Count -eq 0) {
-        Write-LogAvert "Aucun antivirus sélectionné pour suppression."
+        Write-LogAvert "Aucun antivirus selectionne pour suppression."
         return
     }
 
@@ -668,7 +669,7 @@ function Check-Antivirus {
         $av = $avList | Where-Object { $_.Nom -eq $nom } | Select-Object -First 1
         if ($av.UninstallString) {
             try {
-                Write-Log "Désinstallation de $($av.Nom)..."
+                Write-Log "Desinstallation de $($av.Nom)..."
                 $cmd = $av.UninstallString
 
                 if ($cmd -match '^\"(.+?)\"') {
@@ -680,15 +681,15 @@ function Check-Antivirus {
                 }
 
                 Start-Process -FilePath $exe -ArgumentList $args -NoNewWindow -Wait -ErrorAction Stop
-                Write-LogOk "$($av.Nom) désinstallé avec succès."
+                Write-LogOk "$($av.Nom) desinstalle avec succes."
             } catch {
                 Write-LogError "Erreur lors de la suppression de $($av.Nom) : $_"
             }
         } elseif ($av.Nom -like "*Norton*") {
-            Write-LogAvert "Norton détecté sans commande de désinstallation. Utilisation de l’outil officiel..."
+            Write-LogAvert "Norton detecte sans commande de desinstallation. Utilisation de l’outil officiel..."
             Force-Uninstall-Norton
         } else {
-            Write-LogAvert "Aucune commande de désinstallation trouvée pour $($av.Nom)"
+            Write-LogAvert "Aucune commande de desinstallation trouvee pour $($av.Nom)"
         }
     }
 }
@@ -853,13 +854,13 @@ function Uninstall-TargetedApps {
     }
 
     if ($foundApps.Count -eq 0) {
-        Write-Host "Aucune application trouvée pour désinstallation."
+        Write-Host "Aucune application trouvee pour desinstallation."
         return
     }
 
     # Interface graphique
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = "Sélectionnez les applications à désinstaller"
+    $form.Text = "Selectionnez les applications a desinstaller"
     $form.Size = New-Object System.Drawing.Size(500, 450)
     $form.StartPosition = "CenterScreen"
     $form.Font = New-Object System.Drawing.Font("Segoe UI", 10)
@@ -879,7 +880,7 @@ function Uninstall-TargetedApps {
     $form.Controls.Add($list)
 
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Text = "Désinstaller"
+    $btnOK.Text = "Desinstaller"
     $btnOK.Location = New-Object System.Drawing.Point(280, 350)
     $btnOK.Add_Click({ $form.DialogResult = [System.Windows.Forms.DialogResult]::OK; $form.Close() })
     $form.Controls.Add($btnOK)
@@ -891,13 +892,13 @@ function Uninstall-TargetedApps {
     $form.Controls.Add($btnCancel)
 
     if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Désinstallation annulée par l'utilisateur."
+        Write-Log "Desinstallation annulee par l'utilisateur."
         return
     }
 
     $selected = $list.CheckedItems
     if ($selected.Count -eq 0) {
-        Write-LogAvert "Aucune application sélectionnée pour désinstallation."
+        Write-LogAvert "Aucune application selectionnee pour desinstallation."
         return
     }
 
@@ -906,7 +907,7 @@ function Uninstall-TargetedApps {
         if ($app -and $app.UninstallString) {
             try {
                 $cmd = $app.UninstallString
-                Write-LogOk "Désinstallation de $($app.DisplayName)..."
+                Write-LogOk "Desinstallation de $($app.DisplayName)..."
 
                 if ($cmd -match '^\"(.+?)\"') {
                     $exe = $matches[1]
@@ -917,12 +918,12 @@ function Uninstall-TargetedApps {
                 }
 
                 Start-Process -FilePath $exe -ArgumentList $args -NoNewWindow -Wait -ErrorAction Stop
-                Write-LogOk "$($app.DisplayName) désinstallée avec succès."
+                Write-LogOk "$($app.DisplayName) desinstallee avec succes."
             } catch {
-                Write-LogError "Erreur lors de la désinstallation de $($app.DisplayName) : $_"
+                Write-LogError "Erreur lors de la desinstallation de $($app.DisplayName) : $_"
             }
         } else {
-            Write-LogInfo "Pas de commande de désinstallation trouvée pour $name"
+            Write-LogInfo "Pas de commande de desinstallation trouvee pour $name"
         }
     }
 }
@@ -932,17 +933,17 @@ function Update-Apps {
     Add-Type -AssemblyName System.Windows.Forms
     Add-Type -AssemblyName System.Drawing
 
-    Write-Log "Recherche des mises à jour disponibles..."
+    Write-Log "Recherche des mises a jour disponibles..."
 
     try {
         $updates = winget upgrade --accept-source-agreements --accept-package-agreements | Select-String "^[^\s]+\s+[^\s]+\s+[^\s]+"
     } catch {
-        Write-LogError "Erreur lors de la récupération des mises à jour : $_"
+        Write-LogError "Erreur lors de la recuperation des mises a jour : $_"
         return
     }
 
     if (!$updates -or $updates.Count -eq 0) {
-        Write-LogOk "Aucune mise à jour disponible détectée."
+        Write-LogOk "Aucune mise a jour disponible detectee."
         return
     }
 
@@ -959,13 +960,13 @@ function Update-Apps {
     }
 
     if ($appList.Count -eq 0) {
-        Write-LogOk "Aucune mise à jour détectée après traitement."
+        Write-LogOk "Aucune mise a jour detectee apres traitement."
         return
     }
 
     # Interface graphique
     $formUpdate = New-Object System.Windows.Forms.Form
-    $formUpdate.Text = "Mises à jour disponibles"
+    $formUpdate.Text = "Mises a jour disponibles"
     $formUpdate.Size = New-Object System.Drawing.Size(500, 450)
     $formUpdate.StartPosition = "CenterScreen"
     $formUpdate.Font = New-Object System.Drawing.Font("Segoe UI", 10)
@@ -982,7 +983,7 @@ function Update-Apps {
     $formUpdate.Controls.Add($checkList)
 
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Text = "Mettre à jour"
+    $btnOK.Text = "Mettre a jour"
     $btnOK.Location = New-Object System.Drawing.Point(280, 350)
     $btnOK.Add_Click({ $formUpdate.DialogResult = [System.Windows.Forms.DialogResult]::OK; $formUpdate.Close() })
     $formUpdate.Controls.Add($btnOK)
@@ -994,13 +995,13 @@ function Update-Apps {
     $formUpdate.Controls.Add($btnCancel)
 
     if ($formUpdate.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-LogAvert "Mise à jour annulée par l'utilisateur."
+        Write-LogAvert "Mise a jour annulee par l'utilisateur."
         return
     }
 
     $selected = $checkList.CheckedItems
     if ($selected.Count -eq 0) {
-        Write-LogAvert "Aucune application sélectionnée pour mise à jour."
+        Write-LogAvert "Aucune application selectionnee pour mise a jour."
         return
     }
 
@@ -1009,18 +1010,18 @@ function Update-Apps {
         $targetApp = $appList | Where-Object { $_.Nom -eq $name }
         if ($targetApp) {
             try {
-                Write-LogOk "Mise à jour de $($targetApp.Nom)..."
+                Write-LogOk "Mise a jour de $($targetApp.Nom)..."
                 $result = winget upgrade --id "$($targetApp.Id)" --silent --accept-source-agreements --accept-package-agreements 2>&1
 
                 if ($result -match "No applicable update found" -or $result -match "Aucune mise") {
-                    Write-LogInfo "$($targetApp.Nom) est déjà à jour."
+                    Write-LogInfo "$($targetApp.Nom) est deja a jour."
                 } elseif ($result -match "error|echec|failed") {
-                    Write-LogError "Erreur mise à jour $($targetApp.Nom) : $result"
+                    Write-LogError "Erreur mise a jour $($targetApp.Nom) : $result"
                 } else {
-                    Write-LogOk "$($targetApp.Nom) mise à jour terminée."
+                    Write-LogOk "$($targetApp.Nom) mise a jour terminee."
                 }
             } catch {
-                Write-LogError "Exception mise à jour $($targetApp.Nom) : $_"
+                Write-LogError "Exception mise a jour $($targetApp.Nom) : $_"
             }
         }
     }
@@ -1287,7 +1288,7 @@ function Show-OutlookProfilesWithRepair {
 function Get-SystemInfoPlus {
     $output = @{}
 
-    # Infos système
+    # Infos systeme
     $os = Get-CimInstance -ClassName Win32_OperatingSystem
     $computer = Get-CimInstance -ClassName Win32_ComputerSystem
     $bios = Get-CimInstance -ClassName Win32_BIOS
@@ -1297,7 +1298,7 @@ function Get-SystemInfoPlus {
     $disk = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DriveType=3"
     $net = Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration | Where-Object { $_.IPEnabled -eq $true }
 
-    # Résumé
+    # Resume
     $output["Nom de l'ordinateur"] = $env:COMPUTERNAME
     $output["Utilisateur actuel"] = $env:USERNAME
     $output["Administrateur ?"] = if ((New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { "Oui" } else { "Non" }
@@ -1306,74 +1307,220 @@ function Get-SystemInfoPlus {
     $output["Version OS"] = $os.Version
     $output["Architecture"] = $os.OSArchitecture
     $output["Fabricant"] = $computer.Manufacturer
-    $output["Modèle"] = $computer.Model
+    $output["Modele"] = $computer.Model
     $output["BIOS Version"] = $bios.SMBIOSBIOSVersion
     $output["CPU"] = $cpu.Name
-    $output["Cœurs physiques"] = $cpu.NumberOfCores
-    $output["Cœurs logiques"] = $cpu.NumberOfLogicalProcessors
+    $output["Coeurs physiques"] = $cpu.NumberOfCores
+    $output["Coeurs logiques"] = $cpu.NumberOfLogicalProcessors
     $output["RAM Totale (GB)"] = "{0:N2}" -f ($mem.Capacity | Measure-Object -Sum).Sum / 1GB
 
     $output["Disques"] = ($disk | ForEach-Object {
         "$($_.DeviceID) : $([math]::Round($_.Size / 1GB, 2)) GB - Libre: $([math]::Round($_.FreeSpace / 1GB, 2)) GB"
     }) -join " | "
 
-    $output["Réseau"] = ($net | ForEach-Object {
+    $output["Reseau"] = ($net | ForEach-Object {
         "$($_.Description): IP $($_.IPAddress -join ", "), MAC $($_.MACAddress), Passerelle $($_.DefaultIPGateway -join ', '), DNS $($_.DNSServerSearchOrder -join ', ')"
     }) -join "`n"
 
     # Affichage joli
-    Write-Log "`n Informations système complètes :`n" -ForegroundColor Cyan
+    Write-Log "`n Informations systeme completes :`n" -ForegroundColor Cyan
     foreach ($key in $output.Keys) {
         Write-log ("{0,-25} : {1}" -f $key, $output[$key])
     }
 }
 
-function Restart-WildixPhone {
-    # Demande IP
-    Add-Type -AssemblyName Microsoft.VisualBasic
-    $ip = [Microsoft.VisualBasic.Interaction]::InputBox("Adresse IP du telephone Wildix :", "Redemarrage Wildix", "")
-    if (-not $ip) {
-        Write-LogAvert "Redemarrage annulé - IP non fournie."
-        return
-    }
+function Redemarrer-BorneWildix {
+    Add-Type -AssemblyName System.Windows.Forms
 
-    # Demande utilisateur
-    $user = [Microsoft.VisualBasic.Interaction]::InputBox("Nom d'utilisateur :", "Redemarrage Wildix")
-    if (-not $user) {
-        Write-LogAvert "Redemarrage annule - utilisateur non fourni."
-        return
-    }
+    # Identifiants codes en dur
+    $username = "admin"
+    $password = "monSuperMotDePasse123"
 
-    # Demande mot de passe
-    $pass = [Microsoft.VisualBasic.Interaction]::InputBox("Mot de passe :", "Redemarrage Wildix (mot de passe non masque)")
-    if (-not $pass) {
-        Write-LogAvert "Redemarrage annule - mot de passe non fourni."
-        return
-    }
+    # Fenêtre pour saisir uniquement l’IP
+    $form = New-Object System.Windows.Forms.Form
+    $form.Text = "Redemarrage Borne DECT Wildix"
+    $form.Size = New-Object System.Drawing.Size(300,160)
+    $form.StartPosition = "CenterScreen"
 
-    $confirm = [System.Windows.Forms.MessageBox]::Show(
-        "Redemarrer le telephone à l'adresse $ip avec l'utilisateur $user ?",
-        "Confirmation",
-        [System.Windows.Forms.MessageBoxButtons]::YesNo,
-        [System.Windows.Forms.MessageBoxIcon]::Question
+    $labelIP = New-Object System.Windows.Forms.Label
+    $labelIP.Text = "Adresse IP de la borne :"
+    $labelIP.Location = New-Object System.Drawing.Point(10,20)
+    $labelIP.Size = New-Object System.Drawing.Size(250,20)
+
+    $textBoxIP = New-Object System.Windows.Forms.TextBox
+    $textBoxIP.Location = New-Object System.Drawing.Point(10,50)
+    $textBoxIP.Size = New-Object System.Drawing.Size(260,20)
+
+    $btnOK = New-Object System.Windows.Forms.Button
+    $btnOK.Text = "Redemarrer"
+    $btnOK.Location = New-Object System.Drawing.Point(90,90)
+
+    $btnOK.Add_Click({
+        $ip = $textBoxIP.Text
+        if (-not $ip) {
+            [System.Windows.Forms.MessageBox]::Show("Veuillez saisir une adresse IP.","Erreur",[System.Windows.Forms.MessageBoxButtons]::OK,[System.Windows.Forms.MessageBoxIcon]::Warning)
+            return
+        }
+
+        $secpasswd = ConvertTo-SecureString $password -AsPlainText -Force
+        $cred = New-Object System.Management.Automation.PSCredential ($username, $secpasswd)
+
+        try {
+            $url = "http://$ip/cgi-bin/reboot"  # a adapter si necessaire
+            $response = Invoke-WebRequest -Uri $url -Method POST -Credential $cred -TimeoutSec 10 -ErrorAction Stop
+            [System.Windows.Forms.MessageBox]::Show("La borne a bien reçu la commande de redemarrage.","Succes",[System.Windows.Forms.MessageBoxButtons]::OK,[System.Windows.Forms.MessageBoxIcon]::Information)
+        } catch {
+            [System.Windows.Forms.MessageBox]::Show("echec de la commande : $($_.Exception.Message)","Erreur",[System.Windows.Forms.MessageBoxButtons]::OK,[System.Windows.Forms.MessageBoxIcon]::Error)
+        }
+
+        $form.Close()
+    })
+
+    $form.Controls.AddRange(@($labelIP, $textBoxIP, $btnOK))
+    $form.ShowDialog()
+}
+
+
+
+
+function New-NetworkLocationWithAuth {
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
+
+    $form = New-Object System.Windows.Forms.Form
+    $form.Text = "Creer un Emplacement Reseau"
+    $form.Size = New-Object System.Drawing.Size(420, 320)
+    $form.StartPosition = "CenterParent"
+    $form.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+
+    # Chemin reseau
+    $labelPath = New-Object System.Windows.Forms.Label
+    $labelPath.Text = "Chemin reseau :"
+    $labelPath.AutoSize = $true
+    $labelPath.Location = New-Object System.Drawing.Point(10, 20)
+    $form.Controls.Add($labelPath)
+
+    $textPath = New-Object System.Windows.Forms.TextBox
+    $textPath.Size = New-Object System.Drawing.Size(380, 20)
+    $textPath.Location = New-Object System.Drawing.Point(10, 45)
+    $form.Controls.Add($textPath)
+
+    # Lettre de lecteur
+    $labelLetter = New-Object System.Windows.Forms.Label
+    $labelLetter.Text = "Lettre de lecteur :"
+    $labelLetter.Location = New-Object System.Drawing.Point(10, 80)
+    $labelLetter.AutoSize = $true
+    $form.Controls.Add($labelLetter)
+
+    $comboLetter = New-Object System.Windows.Forms.ComboBox
+    $comboLetter.Location = New-Object System.Drawing.Point(150, 75)
+    $comboLetter.Size = New-Object System.Drawing.Size(60, 20)
+    $comboLetter.DropDownStyle = "DropDownList"
+    65..90 | ForEach-Object {
+    $char = [char]$_
+    if (-not (Get-PSDrive -Name $char -ErrorAction SilentlyContinue)) {
+        $comboLetter.Items.Add($char)
+    }
+    }
+    if ($comboLetter.Items.Count -gt 0) {
+    $comboLetter.SelectedIndex = 0
+    } else {
+        Write-LogAvert "Aucune lettre de lecteur disponible pour le mappage."
+    }
+    $form.Controls.Add($comboLetter)
+
+    # Identifiant
+    $labelUser = New-Object System.Windows.Forms.Label
+    $labelUser.Text = "Nom d'utilisateur reseau :"
+    $labelUser.Location = New-Object System.Drawing.Point(10, 110)
+    $labelUser.AutoSize = $true
+    $form.Controls.Add($labelUser)
+
+    $textUser = New-Object System.Windows.Forms.TextBox
+    $textUser.Size = New-Object System.Drawing.Size(300, 20)
+    $textUser.Location = New-Object System.Drawing.Point(10, 135)
+    $form.Controls.Add($textUser)
+
+    # Mot de passe
+    $labelPass = New-Object System.Windows.Forms.Label
+    $labelPass.Text = "Mot de passe :"
+    $labelPass.Location = New-Object System.Drawing.Point(10, 165)
+    $labelPass.AutoSize = $true
+    $form.Controls.Add($labelPass)
+
+    $textPass = New-Object System.Windows.Forms.MaskedTextBox
+    $textPass.Size = New-Object System.Drawing.Size(300, 20)
+    $textPass.PasswordChar = "*"
+    $textPass.Location = New-Object System.Drawing.Point(10, 190)
+    $form.Controls.Add($textPass)
+
+    # Boutons
+    $btnOK = New-Object System.Windows.Forms.Button
+    $btnOK.Text = "Creer"
+    $btnOK.Location = New-Object System.Drawing.Point(250, 230)
+    $btnOK.Add_Click({
+        $drive = $comboLetter.SelectedItem + ":"
+        $path = $textPath.Text
+        $user = $textUser.Text
+        $pass = $textPass.Text
+
+        if (-not ($path -like "\\*")) {
+            [System.Windows.Forms.MessageBox]::Show("Chemin reseau invalide.", "Erreur", "OK", "Error")
+            return
+        }
+
+        try {
+            net use $drive /delete /yes | Out-Null
+            $cmd = "net use $drive `"$path`" `"$pass`" /user:`"$user`" /persistent:yes"
+            Invoke-Expression $cmd
+
+            if (Test-Path "$drive\") {
+                Write-LogOk "Lecteur $drive mappe vers $path avec succes."
+            } else {
+                Write-LogAvert "Le lecteur a ete mappe mais est inaccessible : $drive"
+            }
+            $form.Close()
+        } catch {
+            Write-LogError "Erreur de mappage reseau : $_"
+        }
+    })
+    $form.Controls.Add($btnOK)
+
+    $btnCancel = New-Object System.Windows.Forms.Button
+    $btnCancel.Text = "Annuler"
+    $btnCancel.Location = New-Object System.Drawing.Point(130, 230)
+    $btnCancel.Add_Click({ $form.Close() })
+    $form.Controls.Add($btnCancel)
+
+    $form.ShowDialog() | Out-Null
+}
+
+function Create-LocalAdmin {
+    param (
+        [string]$username = "cliconline",
+        [string]$password = "MotDePasseSuperSecurise123!"
     )
 
-    if ($confirm -ne [System.Windows.Forms.DialogResult]::Yes) {
-        Write-LogAvert "Redemarrage annule par l'utilisateur."
-        return
-    }
-
-    $url = "http://$ip/cgi-bin/cgi?USER=$user&PWD=$pass&action=restart"
-
     try {
-        $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10
-        if ($response.StatusCode -eq 200) {
-            Write-LogOk "Redemarrage du telephone $ip lance avec succes."
+        if (Get-LocalUser -Name $username -ErrorAction SilentlyContinue) {
+            Write-LogAvert "Le compte '$username' existe deja."
         } else {
-            Write-LogError "Erreur HTTP : $($response.StatusCode)"
+            $securePass = ConvertTo-SecureString $password -AsPlainText -Force
+            New-LocalUser -Name $username -Password $securePass -FullName "Compte Admin ClicOnLine" -Description "Compte IT local avec droits admin" -PasswordNeverExpires -UserMayNotChangePassword
+            Add-LocalGroupMember -Group "Administrateurs" -Member $username
+            Write-LogOk "Compte administrateur '$username' cree avec succes."
         }
+
+        # Masquage du compte dans l'ecran de login
+        $regPath = "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList"
+        if (-not (Test-Path $regPath)) {
+            New-Item -Path $regPath -Force | Out-Null
+        }
+
+        New-ItemProperty -Path $regPath -Name $username -PropertyType DWord -Value 0 -Force | Out-Null
+        Write-LogOk "Compte '$username' masque de l’ecran de connexion."
     } catch {
-        Write-LogError "Echec de la requete vers $ip : $_"
+        Write-LogError "Erreur creation ou masquage du compte '$username' : $_"
     }
 }
 
@@ -1401,6 +1548,7 @@ New-TabButton $tabBoost "Booster le PC" 20 20 { Boost-PCPerformance }
 New-TabButton $tabRapport "Exporter le rapport (HTML)" 20 20 { Export-LogHtml }
 New-TabButton $tabRapport "Verifier services critiques" 400 20 { Check-CriticalServices } "Warning"
 New-TabButton $tabRapport "Informations de ce PC (test)" 20 80 { Get-SystemInfoPlus }
+New-TabButton $tabRapport "Creer compte admin Cliconline" 400 80 { Get-SystemInfoPlus }
 
 New-TabButton $tabo365 "Verification la presence Office" 20 20 { Check-OfficeInstallation } "Application"
 New-TabButton $tabo365 "Reparation Office" 20 80 { Repair-OfficeClickToRun }
@@ -1409,12 +1557,16 @@ New-TabButton $tabo365 "Vider les dossiers temporaires d'Outlook" 400 20 { Clean
 New-TabButton $tabo365 "Reparation fichier PST/OST" 400 80 { Repair-OutlookPST }
 New-TabButton $tabo365 "Reparation profil" 400 140 { Show-OutlookProfilesWithRepair }
 
-New-TabButton $tabWildix "Redemarrage borne/telephone (test)" 20 20 { Restart-WildixPhone }
+New-TabButton $tabWildix "Redemarrage borne/telephone (test)" 20 20 { Redemarrer-BorneWildix }
 
-New-TabButton $tabInfos "Informations de ce PC (test)" 190 80 { }
+New-TabButton $tabReseaux "Creation connecteur reseaux (test)" 20 20 { New-NetworkLocationWithAuth }
 
 New-TabButton $tabRouteur "Redemarrage routeur DrayTech (test)" 20 20 {  }
 New-TabButton $tabRouteur "Redemarrage routeur TP-Link (test)" 20 80 {  }
 New-TabButton $tabRouteur "Redemarrage routeur Mikrotik (test)" 20 140 {  }
+New-TabButton $tabRouteur "Creer NAT DrayTech (test)" 400 20 {  }
+New-TabButton $tabRouteur "Creer NAT TP-Link (test)" 400 80 {  }
+New-TabButton $tabRouteur "Creer NAT Mikrotik (test)" 400 140 {  }
+
 
 $form.ShowDialog()
