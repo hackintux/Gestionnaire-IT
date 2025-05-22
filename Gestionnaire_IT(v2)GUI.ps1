@@ -13,10 +13,10 @@ $form.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.Font
 
 # Barre de titre
 $titleLabel = New-Object System.Windows.Forms.Label
-$titleLabel.Text = "CLICONLINE APPS"
+$titleLabel.Text = "CLICONLINE"
 $titleLabel.Size = New-Object System.Drawing.Size(1000, 40)
 $titleLabel.Location = New-Object System.Drawing.Point(10, 10)
-$titleLabel.ForeColor = [System.Drawing.Color]::DeepSkyBlue
+$titleLabel.ForeColor = [System.Drawing.Color]::LimeGreen
 $titleLabel.Font = New-Object System.Drawing.Font("Consolas", 18, [System.Drawing.FontStyle]::Bold)
 $titleLabel.TextAlign = "MiddleCenter"
 $form.Controls.Add($titleLabel)
@@ -34,7 +34,7 @@ function Scan-WindowsUpdate {
         $results = $searcher.Search("IsInstalled=0 and Type='Software'").Updates
 
         if ($results.Count -eq 0) {
-            Write-LogOk "Aucune mise à jour disponible."
+            Write-LogOk "Aucune mise ï¿½ jour disponible."
             return
         }
 
@@ -44,19 +44,19 @@ function Scan-WindowsUpdate {
             $updateList += "$($i+1). $title`n"
         }
 
-        Write-LogAvert "Mises à jour disponibles :"
+        Write-LogAvert "Mises ï¿½ jour disponibles :"
         Write-Log $updateList.Trim()
 
-        # Fenêtre de confirmation style LCARS
+        # Fenï¿½tre de confirmation style LCARS
         $formUpdates = New-Object System.Windows.Forms.Form
-        $formUpdates.Text = "Mises à jour détectées"
+        $formUpdates.Text = "Mises ï¿½ jour dï¿½tectï¿½es"
         $formUpdates.Size = New-Object System.Drawing.Size(600, 400)
         $formUpdates.StartPosition = "CenterScreen"
         $formUpdates.BackColor = [System.Drawing.Color]::Black
         $formUpdates.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
 
         $label = New-Object System.Windows.Forms.Label
-        $label.Text = "Les mises à jour suivantes sont disponibles :"
+        $label.Text = "Les mises ï¿½ jour suivantes sont disponibles :"
         $label.ForeColor = [System.Drawing.Color]::DeepSkyBlue
         $label.AutoSize = $false
         $label.Size = New-Object System.Drawing.Size(560, 30)
@@ -107,17 +107,17 @@ function Scan-WindowsUpdate {
         if ($formUpdates.Tag -eq 'Yes') {
             $downloader = $session.CreateUpdateDownloader()
             $downloader.Updates = $results
-            Write-Log "Téléchargement des mises à jour..."
+            Write-Log "Tï¿½lï¿½chargement des mises ï¿½ jour..."
             $downloader.Download()
 
             $installer = $session.CreateUpdateInstaller()
             $installer.Updates = $results
-            Write-Log "Installation des mises à jour..."
+            Write-Log "Installation des mises ï¿½ jour..."
             $result = $installer.Install()
 
-            Write-LogOk "Résultat de l'installation : $($result.ResultCode)"
+            Write-LogOk "Rï¿½sultat de l'installation : $($result.ResultCode)"
         } else {
-            Write-LogAvert "Installation des mises à jour annulée par l'utilisateur."
+            Write-LogAvert "Installation des mises ï¿½ jour annulï¿½e par l'utilisateur."
         }
 
     } catch {
@@ -171,7 +171,7 @@ function Boost-PCPerformance {
     $btnCancel.Add_Click({ $formBoost.DialogResult = [System.Windows.Forms.DialogResult]::Cancel; $formBoost.Close() })
 
     if ($formBoost.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Boost PC annulé par l’utilisateur."
+        Write-Log "Boost PC annulï¿½ par lï¿½utilisateur."
         return
     }
 
@@ -179,32 +179,32 @@ function Boost-PCPerformance {
         switch ($item) {
             "Activer le plan Haute Performance" {
                 powercfg -setactive SCHEME_MIN
-                Write-LogOk "Plan Haute performance activé."
+                Write-LogOk "Plan Haute performance activï¿½."
             }
             "Nettoyer le dossier Temp" {
                 Remove-Item "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
-                Write-LogOk "Dossier TEMP nettoyé."
+                Write-LogOk "Dossier TEMP nettoyï¿½."
             }
             "Vider la corbeille" {
                 (New-Object -ComObject Shell.Application).NameSpace(0x0a).Items() | ForEach-Object {
                     try { Remove-Item $_.Path -Recurse -Force -ErrorAction SilentlyContinue } catch {}
                 }
-                Write-LogOk "Corbeille vidée."
+                Write-LogOk "Corbeille vidï¿½e."
             }
             "Arreter OneDrive" {
                 Stop-Process -Name OneDrive -Force -ErrorAction SilentlyContinue
-                Write-LogOk "OneDrive arrêté."
+                Write-LogOk "OneDrive arrï¿½tï¿½."
             }
             "Augmenter la RAM virtuelle (pagefile)" {
                 try {
                     $totalRAM_MB = (Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1MB
                     $pagefileSize = [math]::Round($totalRAM_MB * 1.5)
-                    Write-Log "RAM installée : $([math]::Round($totalRAM_MB)) Mo => Pagefile : $pagefileSize Mo"
+                    Write-Log "RAM installï¿½e : $([math]::Round($totalRAM_MB)) Mo => Pagefile : $pagefileSize Mo"
 
                     wmic computersystem where name="%computername%" set AutomaticManagedPagefile=False | Out-Null
                     wmic pagefileset where name="C:\\pagefile.sys" set InitialSize=$pagefileSize,MaximumSize=$pagefileSize | Out-Null
 
-                    Write-LogOk "RAM virtuelle configurée à $pagefileSize Mo"
+                    Write-LogOk "RAM virtuelle configurï¿½e ï¿½ $pagefileSize Mo"
                 } catch {
                     Write-LogError "Erreur configuration RAM virtuelle : $_"
                 }
@@ -213,7 +213,7 @@ function Boost-PCPerformance {
                 try {
                     $startupApps = Get-CimInstance Win32_StartupCommand | Select-Object Name, Command
                     $formStartup = New-Object System.Windows.Forms.Form
-                    $formStartup.Text = "Applications au démarrage"
+                    $formStartup.Text = "Applications au dï¿½marrage"
                     $formStartup.Size = New-Object System.Drawing.Size(600, 450)
                     $formStartup.StartPosition = "CenterParent"
                     $formStartup.BackColor = [System.Drawing.Color]::Black
@@ -239,7 +239,7 @@ function Boost-PCPerformance {
                     $formStartup.Controls.Add($listView)
 
                     $btnDisable = New-Object System.Windows.Forms.Button
-                    $btnDisable.Text = "Désactiver les cochés"
+                    $btnDisable.Text = "Dï¿½sactiver les cochï¿½s"
                     $btnDisable.Size = New-Object System.Drawing.Size(200, 40)
                     $btnDisable.Location = New-Object System.Drawing.Point(200, 360)
                     $btnDisable.BackColor = [System.Drawing.Color]::DarkOrange
@@ -248,7 +248,7 @@ function Boost-PCPerformance {
                     $btnDisable.Add_Click({
                         foreach ($entry in $listView.Items) {
                             if (-not $entry.Checked) {
-                                Write-LogAvert "Application désactivée (simulation) : $($entry.Text)"
+                                Write-LogAvert "Application dï¿½sactivï¿½e (simulation) : $($entry.Text)"
                             }
                         }
                         $formStartup.Close()
@@ -256,13 +256,13 @@ function Boost-PCPerformance {
                     $formStartup.Controls.Add($btnDisable)
                     $formStartup.ShowDialog()
                 } catch {
-                    Write-LogError "Erreur lecture apps démarrage : $_"
+                    Write-LogError "Erreur lecture apps dï¿½marrage : $_"
                 }
             }
         }
     }
 
-    Write-LogOk "Optimisation terminée."
+    Write-LogOk "Optimisation terminï¿½e."
 }
 
 function Create-SystemRestorePoint {
@@ -299,7 +299,7 @@ function Restart-PC {
 }
 
 function Check-ObsoleteDrivers {
-    Write-Log "Scan des pilotes obsolètes..."
+    Write-Log "Scan des pilotes obsolï¿½tes..."
     Animate-ProgressBar -progressBar $progressBar -durationSeconds 2
 
     $drivers = Get-WmiObject Win32_PnPSignedDriver -ErrorAction SilentlyContinue
@@ -316,28 +316,28 @@ function Check-ObsoleteDrivers {
 
             if ($driverDate -lt $limitDate -and $driver.DeviceName -notmatch "PCI|USB|Audio|Graphics|LAN|Wireless|Bluetooth") {
                 $obsolete += $driver
-                Write-LogAvert "$($driver.DeviceName) - $driverDate - $($driver.DriverVersion) - POTENTIELLEMENT OBSOLÈTE"
+                Write-LogAvert "$($driver.DeviceName) - $driverDate - $($driver.DriverVersion) - POTENTIELLEMENT OBSOLï¿½TE"
             }
         }
     }
 
     if ($obsolete.Count -eq 0) {
-        Write-LogOk "Aucun pilote obsolète détecté ou désactivable en toute sécurité."
+        Write-LogOk "Aucun pilote obsolï¿½te dï¿½tectï¿½ ou dï¿½sactivable en toute sï¿½curitï¿½."
         return
     }
 
-    Write-LogAvert "Nombre total de pilotes potentiellement obsolètes : $($obsolete.Count)"
+    Write-LogAvert "Nombre total de pilotes potentiellement obsolï¿½tes : $($obsolete.Count)"
 
-    # === Fenêtre LCARS de confirmation ===
+    # === Fenï¿½tre LCARS de confirmation ===
     $formConfirm = New-Object System.Windows.Forms.Form
-    $formConfirm.Text = "Suppression des pilotes obsolètes"
+    $formConfirm.Text = "Suppression des pilotes obsolï¿½tes"
     $formConfirm.Size = New-Object System.Drawing.Size(600, 250)
     $formConfirm.StartPosition = "CenterScreen"
     $formConfirm.BackColor = [System.Drawing.Color]::Black
     $formConfirm.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
 
     $label = New-Object System.Windows.Forms.Label
-    $label.Text = "Il y a $($obsolete.Count) pilotes potentiellement obsolètes. Souhaitez-vous les désinstaller ?"
+    $label.Text = "Il y a $($obsolete.Count) pilotes potentiellement obsolï¿½tes. Souhaitez-vous les dï¿½sinstaller ?"
     $label.ForeColor = [System.Drawing.Color]::Gold
     $label.Size = New-Object System.Drawing.Size(560, 80)
     $label.Location = New-Object System.Drawing.Point(20, 30)
@@ -381,13 +381,13 @@ function Check-ObsoleteDrivers {
                 $infName = $d.InfName
                 Write-Log "Suppression du pilote : $($d.DeviceName) ($infName)..."
                 pnputil /delete-driver "$infName" /uninstall /force /quiet
-                Write-LogOk "Pilote supprimé : $infName"
+                Write-LogOk "Pilote supprimï¿½ : $infName"
             } catch {
                 Write-LogError "Erreur suppression pilote $($d.DeviceName) : $_"
             }
         }
     } else {
-        Write-Log "Suppression des pilotes annulée par l'utilisateur."
+        Write-Log "Suppression des pilotes annulï¿½e par l'utilisateur."
     }
 }
 
@@ -458,10 +458,10 @@ function Show-SystemHealthDashboard {
 }
 
 function Check-Antivirus {
-    # Détection des antivirus installés
+    # Dï¿½tection des antivirus installï¿½s
     $antivirus = Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct -ErrorAction SilentlyContinue
     if (-not $antivirus) {
-        Write-LogAvert "Aucun antivirus détecté."
+        Write-LogAvert "Aucun antivirus dï¿½tectï¿½."
         return
     }
 
@@ -492,7 +492,7 @@ function Check-Antivirus {
 
     # Interface LCARS
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = "Désinstallation des antivirus"
+    $form.Text = "Dï¿½sinstallation des antivirus"
     $form.Size = New-Object System.Drawing.Size(520, 400)
     $form.StartPosition = "CenterScreen"
     $form.BackColor = [System.Drawing.Color]::Black
@@ -510,7 +510,7 @@ function Check-Antivirus {
     $form.Controls.Add($list)
 
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Text = "Désinstaller"
+    $btnOK.Text = "Dï¿½sinstaller"
     $btnOK.Size = New-Object System.Drawing.Size(120, 40)
     $btnOK.Location = New-Object System.Drawing.Point(280, 280)
     $btnOK.BackColor = [System.Drawing.Color]::LimeGreen
@@ -531,13 +531,13 @@ function Check-Antivirus {
     $btnCancel.Add_Click({ $form.DialogResult = [System.Windows.Forms.DialogResult]::Cancel; $form.Close() })
 
     if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Désinstallation annulée par l'utilisateur."
+        Write-Log "Dï¿½sinstallation annulï¿½e par l'utilisateur."
         return
     }
 
     $selected = $list.CheckedItems
     if ($selected.Count -eq 0) {
-        Write-LogAvert "Aucun antivirus sélectionné pour suppression."
+        Write-LogAvert "Aucun antivirus sï¿½lectionnï¿½ pour suppression."
         return
     }
 
@@ -545,7 +545,7 @@ function Check-Antivirus {
         $av = $avList | Where-Object { $_.Nom -eq $nom } | Select-Object -First 1
         if ($av.UninstallString) {
             try {
-                Write-Log "Désinstallation de $($av.Nom)..."
+                Write-Log "Dï¿½sinstallation de $($av.Nom)..."
                 $cmd = $av.UninstallString
                 if ($cmd -match '^\"(.+?)\"') {
                     $exe = $matches[1]
@@ -555,15 +555,15 @@ function Check-Antivirus {
                     $args = $cmd.Substring($exe.Length)
                 }
                 Start-Process -FilePath $exe -ArgumentList $args -NoNewWindow -Wait -ErrorAction Stop
-                Write-LogOk "$($av.Nom) désinstallé avec succès."
+                Write-LogOk "$($av.Nom) dï¿½sinstallï¿½ avec succï¿½s."
             } catch {
                 Write-LogError "Erreur lors de la suppression de $($av.Nom) : $_"
             }
         } elseif ($av.Nom -like "*Norton*") {
-            Write-LogAvert "Norton détecté sans commande de désinstallation. Téléchargement de l'outil..."
+            Write-LogAvert "Norton dï¿½tectï¿½ sans commande de dï¿½sinstallation. Tï¿½lï¿½chargement de l'outil..."
             Force-Uninstall-Norton
         } else {
-            Write-LogAvert "Aucune commande de désinstallation trouvée pour $($av.Nom)"
+            Write-LogAvert "Aucune commande de dï¿½sinstallation trouvï¿½e pour $($av.Nom)"
         }
     }
 }
@@ -638,13 +638,13 @@ function Uninstall-TargetedApps {
     }
 
     if ($foundApps.Count -eq 0) {
-        Write-LogAvert "Aucune application trouvée pour désinstallation."
+        Write-LogAvert "Aucune application trouvï¿½e pour dï¿½sinstallation."
         return
     }
 
-    # Interface LCARS stylée
+    # Interface LCARS stylï¿½e
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = "Sélectionnez les applications à désinstaller"
+    $form.Text = "Sï¿½lectionnez les applications ï¿½ dï¿½sinstaller"
     $form.Size = New-Object System.Drawing.Size(540, 480)
     $form.StartPosition = "CenterScreen"
     $form.BackColor = [System.Drawing.Color]::Black
@@ -667,7 +667,7 @@ function Uninstall-TargetedApps {
     $form.Controls.Add($list)
 
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Text = "Désinstaller"
+    $btnOK.Text = "Dï¿½sinstaller"
     $btnOK.Size = New-Object System.Drawing.Size(120, 40)
     $btnOK.Location = New-Object System.Drawing.Point(300, 370)
     $btnOK.BackColor = [System.Drawing.Color]::LimeGreen
@@ -687,13 +687,13 @@ function Uninstall-TargetedApps {
     $form.Controls.Add($btnCancel)
 
     if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Désinstallation annulée par l'utilisateur."
+        Write-Log "Dï¿½sinstallation annulï¿½e par l'utilisateur."
         return
     }
 
     $selected = $list.CheckedItems
     if ($selected.Count -eq 0) {
-        Write-LogAvert "Aucune application sélectionnée pour suppression."
+        Write-LogAvert "Aucune application sï¿½lectionnï¿½e pour suppression."
         return
     }
 
@@ -702,7 +702,7 @@ function Uninstall-TargetedApps {
         if ($app -and $app.UninstallString) {
             try {
                 $cmd = $app.UninstallString
-                Write-Log "Désinstallation de $($app.DisplayName)..."
+                Write-Log "Dï¿½sinstallation de $($app.DisplayName)..."
 
                 if ($cmd -match '^"(.+?)"') {
                     $exe = $matches[1]
@@ -713,12 +713,12 @@ function Uninstall-TargetedApps {
                 }
 
                 Start-Process -FilePath $exe -ArgumentList $args -NoNewWindow -Wait -ErrorAction Stop
-                Write-LogOk "$($app.DisplayName) désinstallée avec succès."
+                Write-LogOk "$($app.DisplayName) dï¿½sinstallï¿½e avec succï¿½s."
             } catch {
-                Write-LogError "Erreur lors de la désinstallation de $($app.DisplayName) : $_"
+                Write-LogError "Erreur lors de la dï¿½sinstallation de $($app.DisplayName) : $_"
             }
         } else {
-            Write-LogAvert "Pas de commande de désinstallation trouvée pour $name"
+            Write-LogAvert "Pas de commande de dï¿½sinstallation trouvï¿½e pour $name"
         }
     }
 }
@@ -735,7 +735,7 @@ function Check-CriticalServices {
         }
 
         if ($s.Status -ne 'Running') {
-            Write-LogAvert "$svc NON démarré"
+            Write-LogAvert "$svc NON dï¿½marrï¿½"
             $nonRunning += $s
         } else {
             Write-LogOk "$svc OK"
@@ -747,9 +747,9 @@ function Check-CriticalServices {
         return
     }
 
-    # Interface LCARS pour redémarrer les services arrêtés
+    # Interface LCARS pour redï¿½marrer les services arrï¿½tï¿½s
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = "Démarrer les services arrêtés"
+    $form.Text = "Dï¿½marrer les services arrï¿½tï¿½s"
     $form.Size = New-Object System.Drawing.Size(460, 340)
     $form.StartPosition = "CenterParent"
     $form.BackColor = [System.Drawing.Color]::Black
@@ -769,7 +769,7 @@ function Check-CriticalServices {
     $form.Controls.Add($checkList)
 
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Text = "Démarrer sélection"
+    $btnOK.Text = "Dï¿½marrer sï¿½lection"
     $btnOK.Size = New-Object System.Drawing.Size(150, 40)
     $btnOK.Location = New-Object System.Drawing.Point(250, 240)
     $btnOK.BackColor = [System.Drawing.Color]::LimeGreen
@@ -789,16 +789,16 @@ function Check-CriticalServices {
     $form.Controls.Add($btnCancel)
 
     if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Démarrage des services annulé par l'utilisateur."
+        Write-Log "Dï¿½marrage des services annulï¿½ par l'utilisateur."
         return
     }
 
     foreach ($selectedName in $checkList.CheckedItems) {
         try {
             Start-Service -Name $selectedName -ErrorAction Stop
-            Write-LogOk "Service $selectedName démarré avec succès."
+            Write-LogOk "Service $selectedName dï¿½marrï¿½ avec succï¿½s."
         } catch {
-            Write-LogError "Erreur démarrage service $selectedName : $_"
+            Write-LogError "Erreur dï¿½marrage service $selectedName : $_"
         }
     }
 }
@@ -883,12 +883,12 @@ function Show-OutlookProfilesWithRepair {
         }
 
         if ($allProfiles.Count -eq 0) {
-            Write-LogAvert "Aucun profil Outlook trouvé."
+            Write-LogAvert "Aucun profil Outlook trouvï¿½."
             return
         }
 
         $form = New-Object System.Windows.Forms.Form
-        $form.Text = "Profils Outlook - Sélection pour réparation"
+        $form.Text = "Profils Outlook - Sï¿½lection pour rï¿½paration"
         $form.Size = New-Object System.Drawing.Size(520, 440)
         $form.StartPosition = "CenterScreen"
         $form.BackColor = [System.Drawing.Color]::Black
@@ -908,7 +908,7 @@ function Show-OutlookProfilesWithRepair {
         $form.Controls.Add($checkList)
 
         $btnOK = New-Object System.Windows.Forms.Button
-        $btnOK.Text = "Réparer"
+        $btnOK.Text = "Rï¿½parer"
         $btnOK.Size = New-Object System.Drawing.Size(120, 40)
         $btnOK.Location = New-Object System.Drawing.Point(280, 330)
         $btnOK.BackColor = [System.Drawing.Color]::LimeGreen
@@ -928,17 +928,17 @@ function Show-OutlookProfilesWithRepair {
         $form.Controls.Add($btnCancel)
 
         if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-            Write-Log "Réparation annulée par l'utilisateur."
+            Write-Log "Rï¿½paration annulï¿½e par l'utilisateur."
             return
         }
 
         $selected = $checkList.CheckedItems
         if ($selected.Count -eq 0) {
-            Write-LogAvert "Aucun profil sélectionné."
+            Write-LogAvert "Aucun profil sï¿½lectionnï¿½."
             return
         }
 
-        Write-LogAvert "Outlook arrêté pour maintenance."
+        Write-LogAvert "Outlook arrï¿½tï¿½ pour maintenance."
         Get-Process -Name outlook -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
         $paths = @("$env:APPDATA\Microsoft\Outlook", "$env:LOCALAPPDATA\Microsoft\Outlook")
@@ -950,86 +950,203 @@ function Show-OutlookProfilesWithRepair {
         }
 
         foreach ($profileText in $selected) {
-            Write-LogOk "Profil réparé : $profileText"
+            Write-LogOk "Profil rï¿½parï¿½ : $profileText"
         }
 
-        Write-LogOk "Réparation des profils Outlook terminée."
+        Write-LogOk "Rï¿½paration des profils Outlook terminï¿½e."
 
     } catch {
-        Write-LogError "Erreur durant la détection ou la réparation des profils Outlook : $_"
+        Write-LogError "Erreur durant la dï¿½tection ou la rï¿½paration des profils Outlook : $_"
     }
 }
 
 function Get-SystemInfoPlus {
-    $output = @{}
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Windows.Forms.DataVisualization
+    [System.Windows.Forms.Application]::EnableVisualStyles()
 
-    $os = Get-CimInstance -ClassName Win32_OperatingSystem
-    $computer = Get-CimInstance -ClassName Win32_ComputerSystem
-    $bios = Get-CimInstance -ClassName Win32_BIOS
-    $cpu = Get-CimInstance -ClassName Win32_Processor
-    $gpu = Get-CimInstance -ClassName Win32_VideoController
-    $mem = Get-CimInstance -ClassName Win32_PhysicalMemory
-    $disk = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DriveType=3"
-    $net = Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration | Where-Object { $_.IPEnabled -eq $true }
-
-    $output["Nom de l'ordinateur"] = $env:COMPUTERNAME
-    $output["Utilisateur actuel"] = $env:USERNAME
-    $output["Administrateur ?"] = if ((New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { "Oui" } else { "Non" }
-
-    $output["Nom de l'OS"] = $os.Caption
-    $output["Version OS"] = $os.Version
-    $output["Architecture"] = $os.OSArchitecture
-    $output["Fabricant"] = $computer.Manufacturer
-    $output["Modele"] = $computer.Model
-    $output["BIOS Version"] = $bios.SMBIOSBIOSVersion
-    $output["CPU"] = $cpu.Name
-    $output["Coeurs physiques"] = $cpu.NumberOfCores
-    $output["Coeurs logiques"] = $cpu.NumberOfLogicalProcessors
-    $output["RAM Totale (GB)"] = "{0:N2}" -f ($mem.Capacity | Measure-Object -Sum).Sum / 1GB
-
-    $output["Disques"] = ($disk | ForEach-Object {
-        "$($_.DeviceID) : $([math]::Round($_.Size / 1GB, 2)) GB - Libre: $([math]::Round($_.FreeSpace / 1GB, 2)) GB"
-    }) -join " | "
-
-    $output["Reseau"] = ($net | ForEach-Object {
-        "$($_.Description): IP $($_.IPAddress -join ", "), MAC $($_.MACAddress), Passerelle $($_.DefaultIPGateway -join ', '), DNS $($_.DNSServerSearchOrder -join ', ')"
-    }) -join "`n"
-
-    # Affichage graphique LCARS
+    # === FenÃªtre principale ===
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = "Informations système complètes"
-    $form.Size = New-Object System.Drawing.Size(700, 600)
-    $form.StartPosition = "CenterScreen"
+    $form.Text = "SystÃ¨me en Temps RÃ©el"
+    $form.Size = New-Object System.Drawing.Size(1000, 620)
+    $form.MinimumSize = $form.Size
     $form.BackColor = [System.Drawing.Color]::Black
     $form.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
 
+    # === Infos systÃ¨me texte ===
     $textBox = New-Object System.Windows.Forms.TextBox
     $textBox.Multiline = $true
     $textBox.ScrollBars = "Vertical"
     $textBox.ReadOnly = $true
-    $textBox.Size = New-Object System.Drawing.Size(660, 500)
-    $textBox.Location = New-Object System.Drawing.Point(20, 20)
+    $textBox.Size = New-Object System.Drawing.Size(590, 300)
+    $textBox.Location = New-Object System.Drawing.Point(10, 10)
     $textBox.BackColor = [System.Drawing.Color]::DarkSlateGray
     $textBox.ForeColor = [System.Drawing.Color]::White
 
-    $builder = "Informations système complètes :`r`n`r`n"
-    foreach ($key in $output.Keys) {
-        $builder += "{0,-25} : {1}`r`n" -f $key, $output[$key]
-    }
-
-    $textBox.Text = $builder
     $form.Controls.Add($textBox)
 
+    # === Graphiques dynamiques ===
+    function Create-Chart($title, $topOffset, $color) {
+        $chart = New-Object System.Windows.Forms.DataVisualization.Charting.Chart
+        $chart.Width = 380
+        $chart.Height = 140
+        $chart.Left = 600
+        $chart.Top = $topOffset
+        $chart.BackColor = [System.Drawing.Color]::Black
+
+        $area = New-Object System.Windows.Forms.DataVisualization.Charting.ChartArea "Main"
+        $area.AxisX.MajorGrid.Enabled = $false
+        $area.AxisY.MajorGrid.Enabled = $false
+        $area.AxisY.Maximum = 100
+        $area.BackColor = [System.Drawing.Color]::DarkSlateGray
+        $chart.ChartAreas.Add($area)
+
+        $series = New-Object System.Windows.Forms.DataVisualization.Charting.Series $title
+        $series.ChartType = 'Line'
+        $series.Color = $color
+        $series.BorderWidth = 2
+        $chart.Series.Add($series)
+
+        $chart.Titles.Add($title).ForeColor = $color
+
+        return $chart
+    }
+
+    $chartCPU = Create-Chart "CPU (%)" 10 ([System.Drawing.Color]::Orange)
+    $chartRAM = Create-Chart "RAM (%)" 160 ([System.Drawing.Color]::DeepSkyBlue)
+    $chartDISK = Create-Chart "Disque C: (%)" 310 ([System.Drawing.Color]::LimeGreen)
+
+    $form.Controls.AddRange(@($chartCPU, $chartRAM, $chartDISK))
+
+    # === Barres de progression avec Ã©tiquettes ===
+    $labelRAM = New-Object System.Windows.Forms.Label
+    $labelRAM.Text = "RAM utilisÃ©e :"
+    $labelRAM.ForeColor = [System.Drawing.Color]::White
+    $labelRAM.Location = New-Object System.Drawing.Point(10, 350)
+    $labelRAM.AutoSize = $true
+
+    $progressRAM = New-Object System.Windows.Forms.ProgressBar
+    $progressRAM.Width = 250
+    $progressRAM.Height = 20
+    $progressRAM.Location = New-Object System.Drawing.Point(220, 350)
+
+    $labelDisk = New-Object System.Windows.Forms.Label
+    $labelDisk.Text = "Disque C: utilisÃ© :"
+    $labelDisk.ForeColor = [System.Drawing.Color]::White
+    $labelDisk.Location = New-Object System.Drawing.Point(10, 400)
+    $labelDisk.AutoSize = $true
+
+    $progressDisk = New-Object System.Windows.Forms.ProgressBar
+    $progressDisk.Width = 250
+    $progressDisk.Height = 20
+    $progressDisk.Location = New-Object System.Drawing.Point(220, 400)
+
+    $form.Controls.AddRange(@($labelRAM, $progressRAM, $labelDisk, $progressDisk))
+
+    # === Bouton Fermer ===
     $btnClose = New-Object System.Windows.Forms.Button
     $btnClose.Text = "Fermer"
     $btnClose.Size = New-Object System.Drawing.Size(120, 40)
-    $btnClose.Location = New-Object System.Drawing.Point(280, 520)
+    $btnClose.Location = New-Object System.Drawing.Point(420, 500)
     $btnClose.BackColor = [System.Drawing.Color]::Orange
     $btnClose.ForeColor = [System.Drawing.Color]::Black
     $btnClose.FlatStyle = 'Flat'
-    $btnClose.Add_Click({ $form.Close() })
+    $btnClose.Add_Click({
+    $timer.Stop()
+    $form.Invoke([Action]{
+        $form.Close()
+        $form.Dispose()
+        [System.Windows.Forms.Application]::Exit()
+    })
+})
+    $form.Add_FormClosing({
+    $timer.Stop()
+    $timer.Dispose()
+})    
     $form.Controls.Add($btnClose)
 
+    # === DonnÃ©es dynamiques ===
+    $queueCPU = New-Object System.Collections.Queue
+    $queueRAM = New-Object System.Collections.Queue
+    $queueDISK = New-Object System.Collections.Queue
+    for ($i = 0; $i -lt 30; $i++) { $queueCPU.Enqueue(0); $queueRAM.Enqueue(0); $queueDISK.Enqueue(0) }
+
+    $counterCPU = New-Object System.Diagnostics.PerformanceCounter("Processor", "% Processor Time", "_Total")
+
+    function Get-RAMPercent {
+        $os = Get-CimInstance Win32_OperatingSystem
+        $total = $os.TotalVisibleMemorySize
+        $free = $os.FreePhysicalMemory
+        return [math]::Round((1 - ($free / $total)) * 100, 1)
+    }
+
+    function Get-DiskPercent {
+        $c = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+        return [math]::Round((1 - ($c.FreeSpace / $c.Size)) * 100, 1)
+    }
+
+    function Get-CPUTemp {
+        try {
+            $temp = Get-WmiObject MSAcpi_ThermalZoneTemperature -Namespace "root/wmi"
+            if ($temp -and $temp.CurrentTemperature -gt 0) {
+                return [math]::Round(($temp.CurrentTemperature - 2732) / 10, 1)
+            }
+        } catch { }
+        return "Non disponible"
+    }
+
+    # === Timer pour actualiser ===
+    $timer = New-Object System.Windows.Forms.Timer
+    $timer.Interval = 3000
+    $timer.Add_Tick({
+        $cpuVal = [math]::Round($counterCPU.NextValue(), 3)
+        $ramVal = Get-RAMPercent
+        $diskVal = Get-DiskPercent
+        $tempVal = Get-CPUTemp
+
+        foreach ($q in @($queueCPU, $queueRAM, $queueDISK)) { if ($q.Count -ge 30) { [void]$q.Dequeue() } }
+        $queueCPU.Enqueue($cpuVal); $queueRAM.Enqueue($ramVal); $queueDISK.Enqueue($diskVal)
+
+        $chartCPU.Series[0].Points.Clear()
+        $chartRAM.Series[0].Points.Clear()
+        $chartDISK.Series[0].Points.Clear()
+
+        [int]$i = 0
+        foreach ($v in $queueCPU) { $chartCPU.Series[0].Points.AddXY($i++, $v) }
+        $i = 0; foreach ($v in $queueRAM) { $chartRAM.Series[0].Points.AddXY($i++, $v) }
+        $i = 0; foreach ($v in $queueDISK) { $chartDISK.Series[0].Points.AddXY($i++, $v) }
+
+        $progressRAM.Value = [Math]::Min($ramVal, 100)
+        $labelRAM.Text = "RAM utilisÃ©e : $ramVal%"
+
+        $progressDisk.Value = [Math]::Min($diskVal, 100)
+        $labelDisk.Text = "Disque C: utilisÃ© : $diskVal%"
+
+        $os = Get-CimInstance Win32_OperatingSystem
+        $comp = Get-CimInstance Win32_ComputerSystem
+        $cpu = Get-CimInstance Win32_Processor
+        $bios = Get-CimInstance Win32_BIOS
+        $text = @"
+Ordinateur     : $env:COMPUTERNAME
+Utilisateur    : $env:USERNAME
+OS             : $($os.Caption)
+Version        : $($os.Version)
+Architecture   : $($os.OSArchitecture)
+Fabricant      : $($comp.Manufacturer)
+NumÃ©ro de sÃ©rie : $($bios.SerialNumber)
+ModÃ¨le         : $($comp.Model)
+CPU            : $($cpu.Name)
+CÅ“urs logiques : $($cpu.NumberOfLogicalProcessors)
+TempÃ©rature CPU: $tempVal Â°C
+
+
+
+Certaines informations demandent l'accÃ¨s administrateur
+"@
+        $textBox.Text = $text
+    })
+
+    $timer.Start()
     [void]$form.ShowDialog()
 }
 
@@ -1056,7 +1173,7 @@ function Create-LocalAdmin {
         }
 
         New-ItemProperty -Path $regPath -Name $username -PropertyType DWord -Value 0 -Force | Out-Null
-        Write-LogOk "Compte '$username' masque de l’ecran de connexion."
+        Write-LogOk "Compte '$username' masque de lï¿½ecran de connexion."
     } catch {
         Write-LogError "Erreur creation ou masquage du compte '$username' : $_"
     }
@@ -1064,14 +1181,14 @@ function Create-LocalAdmin {
 
 function Show-ComingSoon {
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = "En cours de développement"
+    $form.Text = "En cours de dÃ©veloppement"
     $form.Size = New-Object System.Drawing.Size(450, 200)
     $form.StartPosition = "CenterScreen"
     $form.BackColor = [System.Drawing.Color]::Black
     $form.Font = New-Object System.Drawing.Font("Consolas", 12, [System.Drawing.FontStyle]::Bold)
 
     $label = New-Object System.Windows.Forms.Label
-    $label.Text = "Fonctionnalité en cours de développement"
+    $label.Text = "FonctionnalitÃ© en cours de dÃ©veloppement"
     $label.Size = New-Object System.Drawing.Size(410, 80)
     $label.Location = New-Object System.Drawing.Point(20, 30)
     $label.ForeColor = [System.Drawing.Color]::Orange
@@ -1092,9 +1209,73 @@ function Show-ComingSoon {
     [void]$form.ShowDialog()
 }
 
+function Start-RescueToolbox {
+    # CrÃ©ation d'une petite fenÃªtre de sÃ©lection
+    $formChoice = New-Object System.Windows.Forms.Form
+    $formChoice.Text = "Outils de RÃ©paration SystÃ¨me"
+    $formChoice.Size = New-Object System.Drawing.Size(400, 200)
+    $formChoice.StartPosition = "CenterScreen"
+    $formChoice.BackColor = [System.Drawing.Color]::Black
+    $formChoice.FormBorderStyle = 'FixedDialog'
 
-# Menu latéral gauche
-$menuItems = @("SERVICES", "ANALYSE", "PARAMETRE", "Créer compte admin Cliconline", "REBOOT", "Désinstallation Logiciels", "DRIVERS")
+    $label = New-Object System.Windows.Forms.Label
+    $label.Text = "Que souhaitez-vous exÃ©cuter ?"
+    $label.Size = New-Object System.Drawing.Size(360, 40)
+    $label.Location = New-Object System.Drawing.Point(20, 20)
+    $label.ForeColor = [System.Drawing.Color]::DeepSkyBlue
+    $label.Font = New-Object System.Drawing.Font("Consolas", 12, [System.Drawing.FontStyle]::Bold)
+    $formChoice.Controls.Add($label)
+
+    # === Bouton DISM ===
+    $btnDISM = New-Object System.Windows.Forms.Button
+    $btnDISM.Text = "DISM"
+    $btnDISM.Size = New-Object System.Drawing.Size(100,40)
+    $btnDISM.Location = New-Object System.Drawing.Point(40, 80)
+    $btnDISM.BackColor = [System.Drawing.Color]::DeepSkyBlue
+    $btnDISM.ForeColor = [System.Drawing.Color]::Black
+    $btnDISM.Add_Click({
+        $formChoice.Close()
+        Write-Log "Lancement DISM..."
+        Start-Process "DISM.exe" "/Online /Cleanup-Image /RestoreHealth" -Wait -NoNewWindow
+        Write-LogOk "DISM terminÃ©."
+    })
+    $formChoice.Controls.Add($btnDISM)
+
+    # === Bouton SFC ===
+    $btnSFC = New-Object System.Windows.Forms.Button
+    $btnSFC.Text = "SFC"
+    $btnSFC.Size = New-Object System.Drawing.Size(100,40)
+    $btnSFC.Location = New-Object System.Drawing.Point(150, 80)
+    $btnSFC.BackColor = [System.Drawing.Color]::Purple
+    $btnSFC.ForeColor = [System.Drawing.Color]::Black
+    $btnSFC.Add_Click({
+        $formChoice.Close()
+        Write-Log "Lancement SFC..."
+        Start-Process "sfc.exe" "/scannow" -Wait -NoNewWindow
+        Write-LogOk "SFC terminÃ©."
+    })
+    $formChoice.Controls.Add($btnSFC)
+
+    # === Bouton CHKDSK ===
+    $btnCHK = New-Object System.Windows.Forms.Button
+    $btnCHK.Text = "CHKDSK"
+    $btnCHK.Size = New-Object System.Drawing.Size(100,40)
+    $btnCHK.Location = New-Object System.Drawing.Point(260, 80)
+    $btnCHK.BackColor = [System.Drawing.Color]::LimeGreen
+    $btnCHK.ForeColor = [System.Drawing.Color]::Black
+    $btnCHK.Add_Click({
+        $formChoice.Close()
+        Write-Log "Lancement CHKDSK (peut nÃ©cessiter redÃ©marrage)..."
+        Start-Process "cmd.exe" "/c chkdsk C: /f /r /x" -Wait -NoNewWindow
+        Write-LogOk "CHKDSK terminÃ© (si applicable)."
+    })
+    $formChoice.Controls.Add($btnCHK)
+
+    $formChoice.ShowDialog()
+}
+
+# Menu latÃ©ral gauche
+$menuItems = @( "ANALYSE", "CrÃ©er compte admin Cliconline", "Point de restauration", "BOOST", "RÃ©paration fichiers systÃ¨me / disque")
 $startY = 80
 foreach ($item in $menuItems) {
     $btn = New-Object System.Windows.Forms.Button
@@ -1107,55 +1288,105 @@ foreach ($item in $menuItems) {
     $btn.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
 
     switch ($item) {
-        "SERVICES" { $btn.Add_Click({ Check-CriticalServices})}
         "ANALYSE" { $btn.Add_Click({ Get-SystemInfoPlus})}
-        "PARAMETRE" { $btn.Add_Click({ Show-ComingSoon})}
-        "Créer compte admin Cliconline" { $btn.Add_Click({ Create-LocalAdmin})}
-        "REBOOT" { $btn.Add_Click({ Restart-PC})}
-        "Désinstallation Logiciels" { $btn.Add_Click({ Uninstall-TargetedApps})}
-        "DRIVERS" { $btn.Add_Click({ Check-ObsoleteDrivers})}
+        "CrÃ©er compte admin Cliconline" { $btn.Add_Click({ Create-LocalAdmin})}
+        "Point de restauration" { $btn.Add_Click({ Create-SystemRestorePoint })}
+        "BOOST" { $btn.Add_Click({ Boost-PCPerformance })}
+        "RÃ©paration fichiers systÃ¨me / disque" { $btn.Add_Click({ Start-RescueToolbox })}
     }
 
     $form.Controls.Add($btn)
     $startY += 60
 }
 
-# Bouton Exit
-$exitBtn = New-Object System.Windows.Forms.Button
-$exitBtn.Text = "EXIT"
-$exitBtn.Size = New-Object System.Drawing.Size(150, 60)
-$exitBtn.Location = New-Object System.Drawing.Point(10, 650)
-$exitBtn.BackColor = [System.Drawing.Color]::OrangeRed
-$exitBtn.ForeColor = [System.Drawing.Color]::White
-$exitBtn.FlatStyle = 'Flat'
-$exitBtn.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
-$exitBtn.Add_Click({ $form.Close() })
-$form.Controls.Add($exitBtn)
+$tabs = @("MISE A JOUR", "RESEAU", "SECURITE", "NETTOYAGE", "OUTLOOK")
+$actionsByTab = @{
+    "MISE A JOUR" = @(
+        @{ Text="WINDOWS UPDATE"; Color="DeepSkyBlue"; Action={ Scan-WindowsUpdate } }
+        @{ Text="REPARER WINDOWS UPDATE"; Color="Purple"; Action={ Repair-WindowsUpdate } }
+        @{ Text="INSTALLER WINGET"; Color="LimeGreen"; Action={ Install-WingetIfMissing } }
+        @{ Text="En cours de dÃ©veloppement"; Color="Gold"; Action={ Show-ComingSoon } }
+        @{ Text="REDEMARRER"; Color="MediumTurquoise"; Action={ Restart-PC } }
+    )
+    "RESEAU" = @(
+        @{ Text="DIAGNOSTIQUE"; Color="MediumTurquoise"; Action={ Start-NetworkDiagnostic } }
+        @{ Text="En cours de dÃ©veloppement"; Color="DeepSkyBlue"; Action={ Show-ComingSoon } }
+        @{ Text="En cours de dÃ©veloppement"; Color="Purple"; Action={ Show-ComingSoon } }
+        @{ Text="En cours de dÃ©veloppement"; Color="LimeGreen"; Action={ Show-ComingSoon } }
+        @{ Text="En cours de dÃ©veloppement"; Color="Gold"; Action={ Show-ComingSoon } }
+    )
+    "SECURITE" = @(
+        @{ Text="ANTIVIRUS"; Color="Gold"; Action={ Check-Antivirus} }
+        @{ Text="En cours de dÃ©veloppement"; Color="MediumTurquoise"; Action={ Show-ComingSoon } }
+        @{ Text="En cours de dÃ©veloppement"; Color="DeepSkyBlue"; Action={ Show-ComingSoon } }
+        @{ Text="En cours de dÃ©veloppement"; Color="Purple"; Action={ Show-ComingSoon } }
+        @{ Text="En cours de dÃ©veloppement"; Color="LimeGreen"; Action={ Show-ComingSoon } }
+    )
+    "NETTOYAGE" = @(
+        @{ Text="Nettoyage rapide"; Color="LimeGreen"; Action={ Quick-SystemClean} }
+        @{ Text="Nettoyage des pilotes obsoletes"; Color="Gold"; Action={ Check-ObsoleteDrivers } }
+        @{ Text="Supprimer logiciels"; Color="MediumTurquoise"; Action={ Uninstall-TargetedApps } }
+        @{ Text="En cours de dÃ©veloppement"; Color="DeepSkyBlue"; Action={ Show-ComingSoon } }
+        @{ Text="En cours de dÃ©veloppement"; Color="Purple"; Action={ Show-ComingSoon } }
+    )
+    "OUTLOOK" = @(
+        @{ Text="NETTOYER CACHE"; Color="Purple"; Action={ Clear-OutlookCache } }
+        @{ Text="NETTOYER FICHIER TEMP"; Color="LimeGreen"; Action={ Clean-OutlookTempFolder } }
+        @{ Text="REPARER FICHIER PST"; Color="Gold"; Action={ Repair-OutlookPST } }
+        @{ Text="En cours de dÃ©veloppement"; Color="MediumTurquoise"; Action={ Show-ComingSoon } }
+        @{ Text="En cours de dÃ©veloppement"; Color="DeepSkyBlue"; Action={ Show-ComingSoon } }
+    )
+}
 
-# Onglets principaux
-$tabs = @("SYSTEME", "RESEAU", "SECURITE", "NETTOYAGE", "POINT DE RESTAURATION")
+$global:actionButtons = @()
+
+function Show-ActionButtons {
+    param($tabName)
+    $actions = $actionsByTab[$tabName]
+    if ($null -eq $actions) {
+        [System.Windows.Forms.MessageBox]::Show("ERREUR : Aucune action trouvÃ©e pour lâ€™onglet '$tabName' !","ERREUR")
+        return
+    }
+    foreach ($btn in $global:actionButtons) { $form.Controls.Remove($btn) }
+    $global:actionButtons = @()
+    $actionX = 180
+    foreach ($action in $actions) {
+        $btn = New-Object System.Windows.Forms.Button
+        $btn.Text = $action.Text
+        $btn.Size = New-Object System.Drawing.Size(150, 60)
+        $btn.Location = New-Object System.Drawing.Point($actionX, 200)
+        $btn.BackColor = [System.Drawing.Color]::$($action.Color)
+        $btn.ForeColor = [System.Drawing.Color]::Black
+        $btn.FlatStyle = 'Flat'
+        $btn.Font = New-Object System.Drawing.Font("Consolas", 12, [System.Drawing.FontStyle]::Bold)
+        $btn.Add_Click($action.Action)
+        $form.Controls.Add($btn)
+        $global:actionButtons += $btn
+        $actionX += 160
+    }
+}
+
 $tabX = 180
 foreach ($tab in $tabs) {
-    $tabBtn = New-Object System.Windows.Forms.Button
-    $tabBtn.Text = $tab
-    $tabBtn.Size = New-Object System.Drawing.Size(150, 40)
-    $tabBtn.Location = New-Object System.Drawing.Point($tabX, 80)
-    $tabBtn.BackColor = [System.Drawing.Color]::DarkSlateBlue
-    $tabBtn.ForeColor = [System.Drawing.Color]::White
-    $tabBtn.FlatStyle = 'Flat'
-    $tabBtn.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
-
-    switch ($tab) {
-        "SYSTEME" { $tabBtn.Add_Click({ Install-WingetIfMissing})}
-        "RESEAU" { }
-        "SECURITE" { $tabBtn.Add_Click({ Check-Antivirus})}
-        "NETTOYAGE" { $tabBtn.Add_Click({ Quick-SystemClean})}
-        "POINT DE RESTAURATION" { $tabBtn.Add_Click({ Create-SystemRestorePoint})}
-    }
-
-    $form.Controls.Add($tabBtn)
+    $btnTab = New-Object System.Windows.Forms.Button
+    $btnTab.Text = $tab
+    $btnTab.Size = New-Object System.Drawing.Size(150, 40)
+    $btnTab.Location = New-Object System.Drawing.Point($tabX, 80)
+    $btnTab.BackColor = [System.Drawing.Color]::DarkSlateBlue
+    $btnTab.ForeColor = [System.Drawing.Color]::White
+    $btnTab.FlatStyle = 'Flat'
+    $btnTab.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
+    # --- SOLUTION : rÃ©cupÃ©rer le texte du bouton cliquÃ© ---
+    $btnTab.Add_Click( {
+        param($sender, $event)
+        $tabClicked = $sender.Text
+        Show-ActionButtons $tabClicked
+    })
+    $form.Controls.Add($btnTab)
     $tabX += 160
 }
+
+Show-ActionButtons $tabs[0]
 
 # Zone de log
 $textBoxLogs = New-Object System.Windows.Forms.RichTextBox -Property @{
@@ -1178,7 +1409,7 @@ function Write-Log {
 }
 
 # Message de bienvenue
-Write-Log "Bienvenue dans le Gestionnaire IT de ClicOnLine. Toutes les actions effectuees s'afficheront ici."
+Write-Log "Bienvenue dans le Gestionnaire IT de ClicOnLine."
 
 function Write-LogError {
     param([string]$message)
@@ -1220,58 +1451,6 @@ function Write-LogInfo {
     $textBoxLogs.ScrollToCaret()
 }
 
-# Boutons d'action principaux
-$actionBtns = @("SCAN", "DIAGNOSTIC", "BOOST PC", "MISE À JOUR", "Réparation Windows update")
-$colors = @("DeepSkyBlue", "Purple", "LimeGreen", "Gold", "mediumTurquoise")
-$actionX = 180
-foreach ($btnText in $actionBtns) {
-    $btn = New-Object System.Windows.Forms.Button
-    $btn.Text = $btnText
-    $btn.Size = New-Object System.Drawing.Size(150, 60)
-    $btn.Location = New-Object System.Drawing.Point($actionX, 200)
-    $btn.BackColor = [System.Drawing.Color]::$($colors[$actionBtns.IndexOf($btnText)])
-    $btn.ForeColor = [System.Drawing.Color]::Black
-    $btn.FlatStyle = 'Flat'
-    $btn.Font = New-Object System.Drawing.Font("Consolas", 12, [System.Drawing.FontStyle]::Bold)
-
-    switch ($btnText) {
-        "BOOST PC"     { $btn.Add_Click({ Boost-PCPerformance }) }
-        "SCAN"         { $btn.Add_Click({ Show-ComingSoon })} 
-        "DIAGNOSTIC"   { $btn.Add_Click({ Show-SystemHealthDashboard }) }
-        "MISE À JOUR"  { $btn.Add_Click({ Scan-WindowsUpdate }) }
-        "Réparation Windows update"         { $btn.Add_Click({ Repair-WindowsUpdate })}
-    }
-
-    $form.Controls.Add($btn)
-    $actionX += 160
-}
-
-# Boutons d'action principaux
-$actionBtns2 = @("CACHE OUTLOOK", "Nettoyer Temporaire Outlook", "Réparer PST Outlook", "Réparer profil Outlook", "en cours de developpement")
-$colors2 = @( "LimeGreen","DeepSkyBlue", "mediumTurquoise", "Purple", "Gold")
-$actionX2 = 180
-foreach ($btnText2 in $actionBtns2) {
-    $btn2 = New-Object System.Windows.Forms.Button
-    $btn2.Text = $btnText2
-    $btn2.Size = New-Object System.Drawing.Size(150, 60)
-    $btn2.Location = New-Object System.Drawing.Point($actionX2, 130)
-    $btn2.BackColor = [System.Drawing.Color]::$($colors2[$actionBtns2.IndexOf($btnText2)])
-    $btn2.ForeColor = [System.Drawing.Color]::Black
-    $btn2.FlatStyle = 'Flat'
-    $btn2.Font = New-Object System.Drawing.Font("Consolas", 12, [System.Drawing.FontStyle]::Bold)
-
-    switch ($btnText2) {
-        "CACHE OUTLOOK"         { $btn2.Add_Click({ Clear-OutlookCache })}
-        "Nettoyer Temporaire Outlook"   { $btn2.Add_Click({ Clean-OutlookTempFolder }) }
-        "Réparer PST Outlook"  { $btn2.Add_Click({ Repair-OutlookPST }) }
-        "Réparer profil Outlook"         { $btn2.Add_Click({ Show-OutlookProfilesWithRepair })}
-        "en cours de developpement"     { $btn2.Add_Click({ Show-ComingSoon })}
-    }
-
-    $form.Controls.Add($btn2)
-    $actionX2 += 160
-}
-
 # Barre de scan (Progression style "scanner")
 $scanPanel = New-Object System.Windows.Forms.Panel
 $scanPanel.Size = New-Object System.Drawing.Size(800, 10)
@@ -1295,9 +1474,22 @@ $timer.Add_Tick({
 })
 $timer.Start()
 
+# Bouton Exit
+$exitBtn = New-Object System.Windows.Forms.Button
+$exitBtn.Text = "EXIT"
+$exitBtn.Size = New-Object System.Drawing.Size(150, 60)
+$exitBtn.Location = New-Object System.Drawing.Point(10, 650)
+$exitBtn.BackColor = [System.Drawing.Color]::OrangeRed
+$exitBtn.ForeColor = [System.Drawing.Color]::White
+$exitBtn.FlatStyle = 'Flat'
+$exitBtn.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
+$exitBtn.Add_Click({ $form.Close() })
+$form.Controls.Add($exitBtn)
+
+
 # Footer officiel
 $footer = New-Object System.Windows.Forms.Label
-$footer.Text = "© 2025 Cliconline - Département IT | Gestionnaire IT v2.0"
+$footer.Text = "ï¿½ 2025 Cliconline - DÃ©partement IT | Gestionnaire IT v2.0"
 $footer.AutoSize = $false
 $footer.Size = New-Object System.Drawing.Size(1000, 25)
 $footer.Location = New-Object System.Drawing.Point(10, 710)
