@@ -831,12 +831,22 @@ function Clear-OutlookCache {
 
 function Clean-OutlookTempFolder {
     try {
-        $tempPath = (Get-ItemProperty "HKCU:\Software\Microsoft\Office\*\Outlook\Security")."OutlookSecureTempFolder"
-        if (Test-Path $tempPath) {
+        $officeVersions = @("16.0", "15.0", "14.0", "12.0") # Office 2016, 2013, 2010, 2007
+        $tempPath = $null
+
+        foreach ($version in $officeVersions) {
+            $keyPath = "HKCU:\Software\Microsoft\Office\$version\Outlook\Security"
+            if (Test-Path $keyPath) {
+                $tempPath = (Get-ItemProperty -Path $keyPath).OutlookSecureTempFolder
+                break
+            }
+        }
+
+        if ($tempPath -and (Test-Path $tempPath)) {
             Remove-Item "$tempPath\*" -Force -Recurse -ErrorAction SilentlyContinue
-            Write-LogOk "Dossier temporaire Outlook vide : $tempPath"
+            Write-LogOk "Dossier temporaire Outlook vidé : $tempPath"
         } else {
-            Write-LogAvert "Dossier temporaire Outlook non trouve."
+            Write-LogAvert "Dossier temporaire Outlook non trouvé ou vide."
         }
     } catch {
         Write-LogError "Erreur nettoyage dossier temp Outlook : $_"
