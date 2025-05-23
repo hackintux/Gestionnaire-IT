@@ -34,7 +34,7 @@ function Scan-WindowsUpdate {
         $results = $searcher.Search("IsInstalled=0 and Type='Software'").Updates
 
         if ($results.Count -eq 0) {
-            Write-LogOk "Aucune mise � jour disponible."
+            Write-LogOk "Aucune mise à jour disponible."
             return
         }
 
@@ -44,19 +44,19 @@ function Scan-WindowsUpdate {
             $updateList += "$($i+1). $title`n"
         }
 
-        Write-LogAvert "Mises � jour disponibles :"
+        Write-LogAvert "Mises à jour disponibles :"
         Write-Log $updateList.Trim()
 
-        # Fen�tre de confirmation style LCARS
+        # Fenétre de confirmation style LCARS
         $formUpdates = New-Object System.Windows.Forms.Form
-        $formUpdates.Text = "Mises � jour d�tect�es"
+        $formUpdates.Text = "Mises à jour détectées"
         $formUpdates.Size = New-Object System.Drawing.Size(600, 400)
         $formUpdates.StartPosition = "CenterScreen"
         $formUpdates.BackColor = [System.Drawing.Color]::Black
         $formUpdates.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
 
         $label = New-Object System.Windows.Forms.Label
-        $label.Text = "Les mises � jour suivantes sont disponibles :"
+        $label.Text = "Les Mises à jour suivantes sont disponibles :"
         $label.ForeColor = [System.Drawing.Color]::DeepSkyBlue
         $label.AutoSize = $false
         $label.Size = New-Object System.Drawing.Size(560, 30)
@@ -107,17 +107,17 @@ function Scan-WindowsUpdate {
         if ($formUpdates.Tag -eq 'Yes') {
             $downloader = $session.CreateUpdateDownloader()
             $downloader.Updates = $results
-            Write-Log "T�l�chargement des mises � jour..."
+            Write-Log "Téléchargement des Mises à jour..."
             $downloader.Download()
 
             $installer = $session.CreateUpdateInstaller()
             $installer.Updates = $results
-            Write-Log "Installation des mises � jour..."
+            Write-Log "Installation des Mises à jour..."
             $result = $installer.Install()
 
-            Write-LogOk "R�sultat de l'installation : $($result.ResultCode)"
+            Write-LogOk "Résultat de l'installation : $($result.ResultCode)"
         } else {
-            Write-LogAvert "Installation des mises � jour annul�e par l'utilisateur."
+            Write-LogAvert "Installation des Mises à jour annulée par l'utilisateur."
         }
 
     } catch {
@@ -171,7 +171,7 @@ function Boost-PCPerformance {
     $btnCancel.Add_Click({ $formBoost.DialogResult = [System.Windows.Forms.DialogResult]::Cancel; $formBoost.Close() })
 
     if ($formBoost.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Boost PC annul� par l�utilisateur."
+        Write-Log "Boost PC annulé par léutilisateur."
         return
     }
 
@@ -179,32 +179,32 @@ function Boost-PCPerformance {
         switch ($item) {
             "Activer le plan Haute Performance" {
                 powercfg -setactive SCHEME_MIN
-                Write-LogOk "Plan Haute performance activ�."
+                Write-LogOk "Plan Haute performance activé."
             }
             "Nettoyer le dossier Temp" {
                 Remove-Item "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
-                Write-LogOk "Dossier TEMP nettoy�."
+                Write-LogOk "Dossier TEMP nettoyé."
             }
             "Vider la corbeille" {
                 (New-Object -ComObject Shell.Application).NameSpace(0x0a).Items() | ForEach-Object {
                     try { Remove-Item $_.Path -Recurse -Force -ErrorAction SilentlyContinue } catch {}
                 }
-                Write-LogOk "Corbeille vid�e."
+                Write-LogOk "Corbeille vidée."
             }
             "Arreter OneDrive" {
                 Stop-Process -Name OneDrive -Force -ErrorAction SilentlyContinue
-                Write-LogOk "OneDrive arr�t�."
+                Write-LogOk "OneDrive arrété."
             }
             "Augmenter la RAM virtuelle (pagefile)" {
                 try {
                     $totalRAM_MB = (Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1MB
                     $pagefileSize = [math]::Round($totalRAM_MB * 1.5)
-                    Write-Log "RAM install�e : $([math]::Round($totalRAM_MB)) Mo => Pagefile : $pagefileSize Mo"
+                    Write-Log "RAM installée : $([math]::Round($totalRAM_MB)) Mo => Pagefile : $pagefileSize Mo"
 
                     wmic computersystem where name="%computername%" set AutomaticManagedPagefile=False | Out-Null
                     wmic pagefileset where name="C:\\pagefile.sys" set InitialSize=$pagefileSize,MaximumSize=$pagefileSize | Out-Null
 
-                    Write-LogOk "RAM virtuelle configur�e � $pagefileSize Mo"
+                    Write-LogOk "RAM virtuelle configurée à $pagefileSize Mo"
                 } catch {
                     Write-LogError "Erreur configuration RAM virtuelle : $_"
                 }
@@ -213,7 +213,7 @@ function Boost-PCPerformance {
                 try {
                     $startupApps = Get-CimInstance Win32_StartupCommand | Select-Object Name, Command
                     $formStartup = New-Object System.Windows.Forms.Form
-                    $formStartup.Text = "Applications au d�marrage"
+                    $formStartup.Text = "Applications au démarrage"
                     $formStartup.Size = New-Object System.Drawing.Size(600, 450)
                     $formStartup.StartPosition = "CenterParent"
                     $formStartup.BackColor = [System.Drawing.Color]::Black
@@ -239,7 +239,7 @@ function Boost-PCPerformance {
                     $formStartup.Controls.Add($listView)
 
                     $btnDisable = New-Object System.Windows.Forms.Button
-                    $btnDisable.Text = "D�sactiver les coch�s"
+                    $btnDisable.Text = "Désactiver les cochés"
                     $btnDisable.Size = New-Object System.Drawing.Size(200, 40)
                     $btnDisable.Location = New-Object System.Drawing.Point(200, 360)
                     $btnDisable.BackColor = [System.Drawing.Color]::DarkOrange
@@ -248,7 +248,7 @@ function Boost-PCPerformance {
                     $btnDisable.Add_Click({
                         foreach ($entry in $listView.Items) {
                             if (-not $entry.Checked) {
-                                Write-LogAvert "Application d�sactiv�e (simulation) : $($entry.Text)"
+                                Write-LogAvert "Application désactivée (simulation) : $($entry.Text)"
                             }
                         }
                         $formStartup.Close()
@@ -256,13 +256,13 @@ function Boost-PCPerformance {
                     $formStartup.Controls.Add($btnDisable)
                     $formStartup.ShowDialog()
                 } catch {
-                    Write-LogError "Erreur lecture apps d�marrage : $_"
+                    Write-LogError "Erreur lecture apps démarrage : $_"
                 }
             }
         }
     }
 
-    Write-LogOk "Optimisation termin�e."
+    Write-LogOk "Optimisation terminée."
 }
 
 function Create-SystemRestorePoint {
@@ -299,7 +299,7 @@ function Restart-PC {
 }
 
 function Check-ObsoleteDrivers {
-    Write-Log "Scan des pilotes obsol�tes..."
+    Write-Log "Scan des pilotes obsolétes..."
     Animate-ProgressBar -progressBar $progressBar -durationSeconds 2
 
     $drivers = Get-WmiObject Win32_PnPSignedDriver -ErrorAction SilentlyContinue
@@ -316,28 +316,28 @@ function Check-ObsoleteDrivers {
 
             if ($driverDate -lt $limitDate -and $driver.DeviceName -notmatch "PCI|USB|Audio|Graphics|LAN|Wireless|Bluetooth") {
                 $obsolete += $driver
-                Write-LogAvert "$($driver.DeviceName) - $driverDate - $($driver.DriverVersion) - POTENTIELLEMENT OBSOL�TE"
+                Write-LogAvert "$($driver.DeviceName) - $driverDate - $($driver.DriverVersion) - POTENTIELLEMENT OBSOLéTE"
             }
         }
     }
 
     if ($obsolete.Count -eq 0) {
-        Write-LogOk "Aucun pilote obsol�te d�tect� ou d�sactivable en toute s�curit�."
+        Write-LogOk "Aucun pilote obsoléte détecté ou désactivable en toute sécurité."
         return
     }
 
-    Write-LogAvert "Nombre total de pilotes potentiellement obsol�tes : $($obsolete.Count)"
+    Write-LogAvert "Nombre total de pilotes potentiellement obsolétes : $($obsolete.Count)"
 
-    # === Fen�tre LCARS de confirmation ===
+    # === Fenétre LCARS de confirmation ===
     $formConfirm = New-Object System.Windows.Forms.Form
-    $formConfirm.Text = "Suppression des pilotes obsol�tes"
+    $formConfirm.Text = "Suppression des pilotes obsolétes"
     $formConfirm.Size = New-Object System.Drawing.Size(600, 250)
     $formConfirm.StartPosition = "CenterScreen"
     $formConfirm.BackColor = [System.Drawing.Color]::Black
     $formConfirm.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
 
     $label = New-Object System.Windows.Forms.Label
-    $label.Text = "Il y a $($obsolete.Count) pilotes potentiellement obsol�tes. Souhaitez-vous les d�sinstaller ?"
+    $label.Text = "Il y a $($obsolete.Count) pilotes potentiellement obsolétes. Souhaitez-vous les désinstaller ?"
     $label.ForeColor = [System.Drawing.Color]::Gold
     $label.Size = New-Object System.Drawing.Size(560, 80)
     $label.Location = New-Object System.Drawing.Point(20, 30)
@@ -381,13 +381,13 @@ function Check-ObsoleteDrivers {
                 $infName = $d.InfName
                 Write-Log "Suppression du pilote : $($d.DeviceName) ($infName)..."
                 pnputil /delete-driver "$infName" /uninstall /force /quiet
-                Write-LogOk "Pilote supprim� : $infName"
+                Write-LogOk "Pilote supprimé : $infName"
             } catch {
                 Write-LogError "Erreur suppression pilote $($d.DeviceName) : $_"
             }
         }
     } else {
-        Write-Log "Suppression des pilotes annul�e par l'utilisateur."
+        Write-Log "Suppression des pilotes annulée par l'utilisateur."
     }
 }
 
@@ -458,10 +458,10 @@ function Show-SystemHealthDashboard {
 }
 
 function Check-Antivirus {
-    # D�tection des antivirus install�s
+    # Détection des antivirus installés
     $antivirus = Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct -ErrorAction SilentlyContinue
     if (-not $antivirus) {
-        Write-LogAvert "Aucun antivirus d�tect�."
+        Write-LogAvert "Aucun antivirus détecté."
         return
     }
 
@@ -492,7 +492,7 @@ function Check-Antivirus {
 
     # Interface LCARS
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = "D�sinstallation des antivirus"
+    $form.Text = "Désinstallation des antivirus"
     $form.Size = New-Object System.Drawing.Size(520, 400)
     $form.StartPosition = "CenterScreen"
     $form.BackColor = [System.Drawing.Color]::Black
@@ -510,7 +510,7 @@ function Check-Antivirus {
     $form.Controls.Add($list)
 
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Text = "D�sinstaller"
+    $btnOK.Text = "Désinstaller"
     $btnOK.Size = New-Object System.Drawing.Size(120, 40)
     $btnOK.Location = New-Object System.Drawing.Point(280, 280)
     $btnOK.BackColor = [System.Drawing.Color]::LimeGreen
@@ -531,13 +531,13 @@ function Check-Antivirus {
     $btnCancel.Add_Click({ $form.DialogResult = [System.Windows.Forms.DialogResult]::Cancel; $form.Close() })
 
     if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "D�sinstallation annul�e par l'utilisateur."
+        Write-Log "Désinstallation annulée par l'utilisateur."
         return
     }
 
     $selected = $list.CheckedItems
     if ($selected.Count -eq 0) {
-        Write-LogAvert "Aucun antivirus s�lectionn� pour suppression."
+        Write-LogAvert "Aucun antivirus sélectionné pour suppression."
         return
     }
 
@@ -545,7 +545,7 @@ function Check-Antivirus {
         $av = $avList | Where-Object { $_.Nom -eq $nom } | Select-Object -First 1
         if ($av.UninstallString) {
             try {
-                Write-Log "D�sinstallation de $($av.Nom)..."
+                Write-Log "Désinstallation de $($av.Nom)..."
                 $cmd = $av.UninstallString
                 if ($cmd -match '^\"(.+?)\"') {
                     $exe = $matches[1]
@@ -555,15 +555,15 @@ function Check-Antivirus {
                     $args = $cmd.Substring($exe.Length)
                 }
                 Start-Process -FilePath $exe -ArgumentList $args -NoNewWindow -Wait -ErrorAction Stop
-                Write-LogOk "$($av.Nom) d�sinstall� avec succ�s."
+                Write-LogOk "$($av.Nom) désinstallé avec succès."
             } catch {
                 Write-LogError "Erreur lors de la suppression de $($av.Nom) : $_"
             }
         } elseif ($av.Nom -like "*Norton*") {
-            Write-LogAvert "Norton d�tect� sans commande de d�sinstallation. T�l�chargement de l'outil..."
+            Write-LogAvert "Norton détecté sans commande de désinstallation. Téléchargement de l'outil..."
             Force-Uninstall-Norton
         } else {
-            Write-LogAvert "Aucune commande de d�sinstallation trouv�e pour $($av.Nom)"
+            Write-LogAvert "Aucune commande de désinstallation trouvée pour $($av.Nom)"
         }
     }
 }
@@ -638,13 +638,13 @@ function Uninstall-TargetedApps {
     }
 
     if ($foundApps.Count -eq 0) {
-        Write-LogAvert "Aucune application trouv�e pour d�sinstallation."
+        Write-LogAvert "Aucune application trouvée pour désinstallation."
         return
     }
 
-    # Interface LCARS styl�e
+    # Interface LCARS stylée
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = "S�lectionnez les applications � d�sinstaller"
+    $form.Text = "Sélectionnez les applications à désinstaller"
     $form.Size = New-Object System.Drawing.Size(540, 480)
     $form.StartPosition = "CenterScreen"
     $form.BackColor = [System.Drawing.Color]::Black
@@ -667,7 +667,7 @@ function Uninstall-TargetedApps {
     $form.Controls.Add($list)
 
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Text = "D�sinstaller"
+    $btnOK.Text = "Désinstaller"
     $btnOK.Size = New-Object System.Drawing.Size(120, 40)
     $btnOK.Location = New-Object System.Drawing.Point(300, 370)
     $btnOK.BackColor = [System.Drawing.Color]::LimeGreen
@@ -687,13 +687,13 @@ function Uninstall-TargetedApps {
     $form.Controls.Add($btnCancel)
 
     if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "D�sinstallation annul�e par l'utilisateur."
+        Write-Log "Désinstallation annulée par l'utilisateur."
         return
     }
 
     $selected = $list.CheckedItems
     if ($selected.Count -eq 0) {
-        Write-LogAvert "Aucune application s�lectionn�e pour suppression."
+        Write-LogAvert "Aucune application sélectionnée pour suppression."
         return
     }
 
@@ -702,7 +702,7 @@ function Uninstall-TargetedApps {
         if ($app -and $app.UninstallString) {
             try {
                 $cmd = $app.UninstallString
-                Write-Log "D�sinstallation de $($app.DisplayName)..."
+                Write-Log "Désinstallation de $($app.DisplayName)..."
 
                 if ($cmd -match '^"(.+?)"') {
                     $exe = $matches[1]
@@ -713,12 +713,12 @@ function Uninstall-TargetedApps {
                 }
 
                 Start-Process -FilePath $exe -ArgumentList $args -NoNewWindow -Wait -ErrorAction Stop
-                Write-LogOk "$($app.DisplayName) d�sinstall�e avec succ�s."
+                Write-LogOk "$($app.DisplayName) désinstallée avec succès."
             } catch {
-                Write-LogError "Erreur lors de la d�sinstallation de $($app.DisplayName) : $_"
+                Write-LogError "Erreur lors de la désinstallation de $($app.DisplayName) : $_"
             }
         } else {
-            Write-LogAvert "Pas de commande de d�sinstallation trouv�e pour $name"
+            Write-LogAvert "Pas de commande de désinstallation trouvée pour $name"
         }
     }
 }
@@ -735,7 +735,7 @@ function Check-CriticalServices {
         }
 
         if ($s.Status -ne 'Running') {
-            Write-LogAvert "$svc NON d�marr�"
+            Write-LogAvert "$svc NON démarré"
             $nonRunning += $s
         } else {
             Write-LogOk "$svc OK"
@@ -747,9 +747,9 @@ function Check-CriticalServices {
         return
     }
 
-    # Interface LCARS pour red�marrer les services arr�t�s
+    # Interface LCARS pour redémarrer les services arrétés
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = "D�marrer les services arr�t�s"
+    $form.Text = "Démarrer les services arrétés"
     $form.Size = New-Object System.Drawing.Size(460, 340)
     $form.StartPosition = "CenterParent"
     $form.BackColor = [System.Drawing.Color]::Black
@@ -769,7 +769,7 @@ function Check-CriticalServices {
     $form.Controls.Add($checkList)
 
     $btnOK = New-Object System.Windows.Forms.Button
-    $btnOK.Text = "D�marrer s�lection"
+    $btnOK.Text = "Démarrer sélection"
     $btnOK.Size = New-Object System.Drawing.Size(150, 40)
     $btnOK.Location = New-Object System.Drawing.Point(250, 240)
     $btnOK.BackColor = [System.Drawing.Color]::LimeGreen
@@ -789,16 +789,16 @@ function Check-CriticalServices {
     $form.Controls.Add($btnCancel)
 
     if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "D�marrage des services annul� par l'utilisateur."
+        Write-Log "Démarrage des services annulé par l'utilisateur."
         return
     }
 
     foreach ($selectedName in $checkList.CheckedItems) {
         try {
             Start-Service -Name $selectedName -ErrorAction Stop
-            Write-LogOk "Service $selectedName d�marr� avec succ�s."
+            Write-LogOk "Service $selectedName démarré avec succès."
         } catch {
-            Write-LogError "Erreur d�marrage service $selectedName : $_"
+            Write-LogError "Erreur démarrage service $selectedName : $_"
         }
     }
 }
@@ -831,22 +831,12 @@ function Clear-OutlookCache {
 
 function Clean-OutlookTempFolder {
     try {
-        $officeVersions = @("16.0", "15.0", "14.0", "12.0") # Office 2016, 2013, 2010, 2007
-        $tempPath = $null
-
-        foreach ($version in $officeVersions) {
-            $keyPath = "HKCU:\Software\Microsoft\Office\$version\Outlook\Security"
-            if (Test-Path $keyPath) {
-                $tempPath = (Get-ItemProperty -Path $keyPath).OutlookSecureTempFolder
-                break
-            }
-        }
-
-        if ($tempPath -and (Test-Path $tempPath)) {
+        $tempPath = (Get-ItemProperty "HKCU:\Software\Microsoft\Office\*\Outlook\Security")."OutlookSecureTempFolder"
+        if (Test-Path $tempPath) {
             Remove-Item "$tempPath\*" -Force -Recurse -ErrorAction SilentlyContinue
-            Write-LogOk "Dossier temporaire Outlook vidé : $tempPath"
+            Write-LogOk "Dossier temporaire Outlook vide : $tempPath"
         } else {
-            Write-LogAvert "Dossier temporaire Outlook non trouvé ou vide."
+            Write-LogAvert "Dossier temporaire Outlook non trouve."
         }
     } catch {
         Write-LogError "Erreur nettoyage dossier temp Outlook : $_"
@@ -893,12 +883,12 @@ function Show-OutlookProfilesWithRepair {
         }
 
         if ($allProfiles.Count -eq 0) {
-            Write-LogAvert "Aucun profil Outlook trouv�."
+            Write-LogAvert "Aucun profil Outlook trouvé."
             return
         }
 
         $form = New-Object System.Windows.Forms.Form
-        $form.Text = "Profils Outlook - S�lection pour r�paration"
+        $form.Text = "Profils Outlook - Sélection pour réparation"
         $form.Size = New-Object System.Drawing.Size(520, 440)
         $form.StartPosition = "CenterScreen"
         $form.BackColor = [System.Drawing.Color]::Black
@@ -918,7 +908,7 @@ function Show-OutlookProfilesWithRepair {
         $form.Controls.Add($checkList)
 
         $btnOK = New-Object System.Windows.Forms.Button
-        $btnOK.Text = "R�parer"
+        $btnOK.Text = "Réparer"
         $btnOK.Size = New-Object System.Drawing.Size(120, 40)
         $btnOK.Location = New-Object System.Drawing.Point(280, 330)
         $btnOK.BackColor = [System.Drawing.Color]::LimeGreen
@@ -938,17 +928,17 @@ function Show-OutlookProfilesWithRepair {
         $form.Controls.Add($btnCancel)
 
         if ($form.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-            Write-Log "R�paration annul�e par l'utilisateur."
+            Write-Log "Réparation annulée par l'utilisateur."
             return
         }
 
         $selected = $checkList.CheckedItems
         if ($selected.Count -eq 0) {
-            Write-LogAvert "Aucun profil s�lectionn�."
+            Write-LogAvert "Aucun profil sélectionné."
             return
         }
 
-        Write-LogAvert "Outlook arr�t� pour maintenance."
+        Write-LogAvert "Outlook arrété pour maintenance."
         Get-Process -Name outlook -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
         $paths = @("$env:APPDATA\Microsoft\Outlook", "$env:LOCALAPPDATA\Microsoft\Outlook")
@@ -960,13 +950,13 @@ function Show-OutlookProfilesWithRepair {
         }
 
         foreach ($profileText in $selected) {
-            Write-LogOk "Profil r�par� : $profileText"
+            Write-LogOk "Profil réparé : $profileText"
         }
 
-        Write-LogOk "R�paration des profils Outlook termin�e."
+        Write-LogOk "Réparation des profils Outlook terminée."
 
     } catch {
-        Write-LogError "Erreur durant la d�tection ou la r�paration des profils Outlook : $_"
+        Write-LogError "Erreur durant la détection ou la réparation des profils Outlook : $_"
     }
 }
 
@@ -1183,7 +1173,7 @@ function Create-LocalAdmin {
         }
 
         New-ItemProperty -Path $regPath -Name $username -PropertyType DWord -Value 0 -Force | Out-Null
-        Write-LogOk "Compte '$username' masque de l�ecran de connexion."
+        Write-LogOk "Compte '$username' masque de l'écran de connexion."
     } catch {
         Write-LogError "Erreur creation ou masquage du compte '$username' : $_"
     }
@@ -1499,7 +1489,7 @@ $form.Controls.Add($exitBtn)
 
 # Footer officiel
 $footer = New-Object System.Windows.Forms.Label
-$footer.Text = "� 2025 Cliconline - Département IT | Gestionnaire IT v2.0"
+$footer.Text = "© 2025 Cliconline - Département IT | Gestionnaire IT v2.0"
 $footer.AutoSize = $false
 $footer.Size = New-Object System.Drawing.Size(1000, 25)
 $footer.Location = New-Object System.Drawing.Point(10, 710)
