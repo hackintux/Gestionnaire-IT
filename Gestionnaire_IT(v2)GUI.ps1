@@ -171,7 +171,7 @@ function Boost-PCPerformance {
     $btnCancel.Add_Click({ $formBoost.DialogResult = [System.Windows.Forms.DialogResult]::Cancel; $formBoost.Close() })
 
     if ($formBoost.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Boost PC annulé par léutilisateur."
+        Write-Log "Boost PC annulé par l'utilisateur."
         return
     }
 
@@ -316,7 +316,7 @@ function Check-ObsoleteDrivers {
 
             if ($driverDate -lt $limitDate -and $driver.DeviceName -notmatch "PCI|USB|Audio|Graphics|LAN|Wireless|Bluetooth") {
                 $obsolete += $driver
-                Write-LogAvert "$($driver.DeviceName) - $driverDate - $($driver.DriverVersion) - POTENTIELLEMENT OBSOLéTE"
+                Write-LogAvert "$($driver.DeviceName) - $driverDate - $($driver.DriverVersion) - POTENTIELLEMENT OBSOLETE"
             }
         }
     }
