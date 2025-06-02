@@ -1,37 +1,116 @@
-#Requires -Version 5.1
-$OutputEncoding = [System.Text.Encoding]::UTF8
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-
+# Gestionnaire IT GUI – Version complète (Thème sombre/clair)
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# Formulaire principal
+# := Définition de la couleur “lime-vert” en scope global := 
+$global:greenLime = [System.Drawing.Color]::FromArgb(117, 180, 25)
+
+# -------------------------
+# 1. Thème initial global
+# -------------------------
+$global:theme = "dark"
+
+# -------------------------
+# 2. Déclarations globales
+# -------------------------
+# Collections de contrôles
+$generalButtons       = @()
+$itemButtons          = @()
+$tabButtons           = @()
+$global:actionButtons = @()
+
+# -------------------------
+# 3. Fonction Apply-Theme
+# -------------------------
+function Apply-Theme {
+    param(
+        [ValidateSet("dark","light")]
+        [string]$mode
+    )
+    $greenLime = [System.Drawing.Color]::FromArgb(117, 180, 25)
+
+    if ($mode -eq "dark") {
+        $form.BackColor       = [System.Drawing.Color]::FromArgb(30,30,30)
+        $titleLabel.ForeColor = $greenLime
+        $textBoxLogs.BackColor     = [System.Drawing.Color]::FromArgb(45,45,45)
+        $textBoxLogs.ForeColor     = [System.Drawing.Color]::White
+
+        $themeButton.BackColor = $greenLime
+        $themeButton.ForeColor = [System.Drawing.Color]::Black
+
+        foreach ($btn in $itemButtons)         { $btn.BackColor = $greenLime; $btn.ForeColor = [System.Drawing.Color]::White }
+        foreach ($btn in $tabButtons)          { $btn.BackColor = "white"; $btn.ForeColor = $greenLime }
+        foreach ($btn in $generalButtons)      { $btn.BackColor = $greenLime; $btn.ForeColor = [System.Drawing.Color]::White }
+        foreach ($btn in $global:actionButtons){ $btn.BackColor = "white"; $btn.ForeColor = [System.Drawing.Color]::FromArgb(45,45,45) }
+    } else {
+        $form.BackColor       = [System.Drawing.Color]::White
+        $titleLabel.ForeColor = $greenLime
+        $textBoxLogs.BackColor     = [System.Drawing.Color]::WhiteSmoke
+        $textBoxLogs.ForeColor     = [System.Drawing.Color]::Black
+
+        $themeButton.BackColor = $greenLime
+        $themeButton.ForeColor = [System.Drawing.Color]::White
+
+        foreach ($btn in $itemButtons)         { $btn.BackColor = $greenLime; $btn.ForeColor = [System.Drawing.Color]::White }
+        foreach ($btn in $tabButtons)          { $btn.BackColor = $greenLime; $btn.ForeColor = [System.Drawing.Color]::White }
+        foreach ($btn in $generalButtons)      { $btn.BackColor = $greenLime; $btn.ForeColor = [System.Drawing.Color]::White }
+        foreach ($btn in $global:actionButtons){ $btn.BackColor = $greenLime; $btn.ForeColor = [System.Drawing.Color]::White }
+    }
+}
+
+# -------------------------
+# 4. Formulaire principal
+# -------------------------
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "Gestionnaire IT - ClicOnLine"
-$form.Size = New-Object System.Drawing.Size(1024, 768)
-$form.StartPosition = "CenterScreen"
-$form.BackColor = [System.Drawing.Color]::Black
+$form.Text            = "Gestionnaire IT - ClicOnLine"
+$form.Size            = New-Object System.Drawing.Size(1130, 800)
+$form.StartPosition   = "CenterScreen"
 $form.FormBorderStyle = 'FixedDialog'
+$form.Font            = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
 
-$form.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
+# -------------------------
+# 5. Logo et titre
+# -------------------------
+$logoBox = New-Object System.Windows.Forms.PictureBox
+$logoBox.Size        = New-Object System.Drawing.Size(60, 90)
+$logoBox.Location    = New-Object System.Drawing.Point(10, 10)
+$logoBox.SizeMode    = "StretchImage"
+$logoPath = "C:\Users\David Salvador\Documents\Scripts\Powershell\clic_version\Gestionnaire_IT_clic\icone.ico"
+if (Test-Path $logoPath) {
+    $logoBox.Image = [System.Drawing.Image]::FromFile($logoPath)
+}
+$form.Controls.Add($logoBox)
 
-# Barre de titre
 $titleLabel = New-Object System.Windows.Forms.Label
-$titleLabel.Text = "CLICONLINE"
-$titleLabel.Size = New-Object System.Drawing.Size(1000, 40)
-$titleLabel.Location = New-Object System.Drawing.Point(10, 10)
-$titleLabel.ForeColor = [System.Drawing.Color]::LimeGreen
-$titleLabel.Font = New-Object System.Drawing.Font("Consolas", 18, [System.Drawing.FontStyle]::Bold)
-$titleLabel.TextAlign = "MiddleCenter"
+$titleLabel.Text      = "CLICONLINE"
+$titleLabel.Size      = New-Object System.Drawing.Size(500, 50)
+$titleLabel.Location  = New-Object System.Drawing.Point(70, 30)
+$titleLabel.Font      = New-Object System.Drawing.Font("Consolas", 32, [System.Drawing.FontStyle]::Bold)
+$titleLabel.TextAlign = "MiddleLeft"
 $form.Controls.Add($titleLabel)
 
-# Fonctions
+# -------------------------
+# 6. Bouton Changer de thème
+# -------------------------
+$themeButton = New-Object System.Windows.Forms.Button
+$themeButton.Text     = "Changer de thème"
+$themeButton.Size     = New-Object System.Drawing.Size(180, 30)
+$themeButton.Location = New-Object System.Drawing.Point(920, 15)
+$themeButton.FlatStyle= "Standard"
+$themeButton.Font     = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Regular)
+$themeButton.Add_Click({
+    if ($global:theme -eq "dark") { $global:theme = "light" } else { $global:theme = "dark" }
+    Apply-Theme -mode $global:theme
+})
+$form.Controls.Add($themeButton)
 
+# Fonctions
 function Scan-WindowsUpdate {
     try {
         Write-Log "Scan Windows Update..."
         $serviceWU = Get-Service -Name wuauserv -ErrorAction Stop
         Write-Log "Service Windows Update : $($serviceWU.Status)"
+        Write-Log "Veuillez patientez ..."
 
         $session = New-Object -ComObject Microsoft.Update.Session
         $searcher = $session.CreateUpdateSearcher()
@@ -56,7 +135,7 @@ function Scan-WindowsUpdate {
         $formUpdates.Text = "Mises à jour détectées"
         $formUpdates.Size = New-Object System.Drawing.Size(600, 400)
         $formUpdates.StartPosition = "CenterScreen"
-        $formUpdates.BackColor = [System.Drawing.Color]::Black
+        $formUpdates.BackColor = [System.Drawing.Color]::FromArgb(45,45,45)
         $formUpdates.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
 
         $label = New-Object System.Windows.Forms.Label
@@ -134,7 +213,7 @@ function Boost-PCPerformance {
     $formBoost.Text = "Optimisation du PC"
     $formBoost.Size = New-Object System.Drawing.Size(500, 360)
     $formBoost.StartPosition = "CenterParent"
-    $formBoost.BackColor = [System.Drawing.Color]::Black
+    $formBoost.BackColor = [System.Drawing.Color]::FromArgb(45,45,45)
     $formBoost.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
 
     $checkList = New-Object System.Windows.Forms.CheckedListBox
@@ -175,7 +254,7 @@ function Boost-PCPerformance {
     $btnCancel.Add_Click({ $formBoost.DialogResult = [System.Windows.Forms.DialogResult]::Cancel; $formBoost.Close() })
 
     if ($formBoost.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Log "Boost PC annulé par léutilisateur."
+        Write-Log "Boost PC annulé par l'utilisateur."
         return
     }
 
@@ -1364,92 +1443,112 @@ function Analyse-ReactiviteSysteme {
     }
 }
 
-
-# Menu latéral gauche
-$menuItems = @( "ANALYSE", "Créer compte admin Cliconline", "Point de restauration", "BOOST", "Réparation fichiers système / disque")
-$startY = 80
+# -------------------------
+# 7. Menu latéral gauche
+# -------------------------
+$menuItems = @(
+    "ANALYSE",
+    "Créer compte admin Cliconline",
+    "Point de restauration",
+    "BOOST",
+    "Réparation système / disque"
+)
+$startY = 120
 foreach ($item in $menuItems) {
     $btn = New-Object System.Windows.Forms.Button
-    $btn.Text = $item
-    $btn.Size = New-Object System.Drawing.Size(150, 50)
-    $btn.Location = New-Object System.Drawing.Point(10, $startY)
-    $btn.BackColor = [System.Drawing.Color]::Orange
-    $btn.ForeColor = [System.Drawing.Color]::Black
-    $btn.FlatStyle = 'Flat'
-    $btn.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
-
+    $btn.Text      = $item
+    $btn.Size      = New-Object System.Drawing.Size(250, 40)
+    $btn.Location  = New-Object System.Drawing.Point(30, $startY)
+    $btn.FlatStyle = "Flat"
+    $btn.Font      = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     switch ($item) {
-        "ANALYSE" { $btn.Add_Click({ Get-SystemInfoPlus})}
-        "Créer compte admin Cliconline" { $btn.Add_Click({ Create-LocalAdmin})}
-        "Point de restauration" { $btn.Add_Click({ Create-SystemRestorePoint })}
-        "BOOST" { $btn.Add_Click({ Boost-PCPerformance })}
-        "Réparation fichiers système / disque" { $btn.Add_Click({ Start-RescueToolbox })}
+        "ANALYSE"                       { $btn.Add_Click({ Get-SystemInfoPlus }) }
+        "Créer compte admin Cliconline" { $btn.Add_Click({ Create-LocalAdmin }) }
+        "Point de restauration"         { $btn.Add_Click({ Create-SystemRestorePoint }) }
+        "BOOST"                         { $btn.Add_Click({ Boost-PCPerformance }) }
+        "Réparation système / disque"   { $btn.Add_Click({ Start-RescueToolbox }) }
     }
-
+    $itemButtons    += $btn
     $form.Controls.Add($btn)
     $startY += 60
 }
 
-$tabs = @("MISE A JOUR", "RESEAU", "SECURITE", "NETTOYAGE", "OUTLOOK")
+# -------------------------
+# 8. Onglets et actions
+# -------------------------
+$tabs = @("MISE A JOUR","RESEAU","SECURITE","NETTOYAGE","OUTLOOK")
 $actionsByTab = @{
     "MISE A JOUR" = @(
-        @{ Text="WINDOWS UPDATE"; Color="DeepSkyBlue"; Action={ Scan-WindowsUpdate } }
-        @{ Text="REPARER WINDOWS UPDATE"; Color="Purple"; Action={ Repair-WindowsUpdate } }
-        @{ Text="INSTALLER WINGET"; Color="LimeGreen"; Action={ Install-WingetIfMissing } }
-        @{ Text="TEST"; Color="Gold"; Action={ Analyse-ReactiviteSysteme } }
-        @{ Text="REDEMARRER"; Color="MediumTurquoise"; Action={ Restart-PC } }
+        @{ Text="WINDOWS UPDATE"; Action={ Scan-WindowsUpdate } }
+        @{ Text="REPARER WINDOWS UPDATE"; Action={ Repair-WindowsUpdate } }
+        @{ Text="INSTALLER WINGET"; Action={ Install-WingetIfMissing } }
+        @{ Text="TEST"; Action={ Analyse-ReactiviteSysteme } }
+        @{ Text="REDEMARRER"; Action={ Restart-PC } }
     )
     "RESEAU" = @(
-        @{ Text="DIAGNOSTIQUE"; Color="MediumTurquoise"; Action={ Start-NetworkDiagnostic } }
-        @{ Text="En cours de développement"; Color="DeepSkyBlue"; Action={ Show-ComingSoon } }
-        @{ Text="En cours de développement"; Color="Purple"; Action={ Show-ComingSoon } }
-        @{ Text="En cours de développement"; Color="LimeGreen"; Action={ Show-ComingSoon } }
-        @{ Text="En cours de développement"; Color="Gold"; Action={ Show-ComingSoon } }
+        @{ Text="DIAGNOSTIQUE"; Action={ Start-NetworkDiagnostic } }
+        @{ Text="En cours dev.";    Action={ Show-ComingSoon } }
+        @{ Text="En cours dev.";    Action={ Show-ComingSoon } }
+        @{ Text="En cours dev.";    Action={ Show-ComingSoon } }
+        @{ Text="En cours dev.";    Action={ Show-ComingSoon } }
     )
     "SECURITE" = @(
-        @{ Text="ANTIVIRUS"; Color="Gold"; Action={ Check-Antivirus} }
-        @{ Text="En cours de développement"; Color="MediumTurquoise"; Action={ Show-ComingSoon } }
-        @{ Text="En cours de développement"; Color="DeepSkyBlue"; Action={ Show-ComingSoon } }
-        @{ Text="En cours de développement"; Color="Purple"; Action={ Show-ComingSoon } }
-        @{ Text="En cours de développement"; Color="LimeGreen"; Action={ Show-ComingSoon } }
+        @{ Text="ANTIVIRUS"; Action={ Check-Antivirus } }
+        @{ Text="En cours dev."; Action={ Show-ComingSoon } }
+        @{ Text="En cours dev."; Action={ Show-ComingSoon } }
+        @{ Text="En cours dev."; Action={ Show-ComingSoon } }
+        @{ Text="En cours dev."; Action={ Show-ComingSoon } }
     )
     "NETTOYAGE" = @(
-        @{ Text="Nettoyage rapide"; Color="LimeGreen"; Action={ Quick-SystemClean} }
-        @{ Text="Nettoyage des pilotes obsoletes"; Color="Gold"; Action={ Check-ObsoleteDrivers } }
-        @{ Text="Supprimer logiciels"; Color="MediumTurquoise"; Action={ Uninstall-TargetedApps } }
-        @{ Text="En cours de développement"; Color="DeepSkyBlue"; Action={ Show-ComingSoon } }
-        @{ Text="En cours de développement"; Color="Purple"; Action={ Show-ComingSoon } }
+        @{ Text="Nettoyage rapide";      Action={ Quick-SystemClean } }
+        @{ Text="Pilotes obsolètes";     Action={ Check-ObsoleteDrivers } }
+        @{ Text="Supprimer logiciels";   Action={ Uninstall-TargetedApps } }
+        @{ Text="En cours dev.";         Action={ Show-ComingSoon } }
+        @{ Text="En cours dev.";         Action={ Show-ComingSoon } }
     )
     "OUTLOOK" = @(
-        @{ Text="NETTOYER CACHE"; Color="Purple"; Action={ Clear-OutlookCache } }
-        @{ Text="NETTOYER FICHIER TEMP"; Color="LimeGreen"; Action={ Clean-OutlookTempFolder } }
-        @{ Text="REPARER FICHIER PST"; Color="Gold"; Action={ Repair-OutlookPST } }
-        @{ Text="En cours de développement"; Color="MediumTurquoise"; Action={ Show-ComingSoon } }
-        @{ Text="En cours de développement"; Color="DeepSkyBlue"; Action={ Show-ComingSoon } }
+        @{ Text="NETTOYER CACHE";        Action={ Clear-OutlookCache } }
+        @{ Text="NETTOYER TEMP";         Action={ Clean-OutlookTempFolder } }
+        @{ Text="REPARER PST";           Action={ Repair-OutlookPST } }
+        @{ Text="En cours dev.";         Action={ Show-ComingSoon } }
+        @{ Text="En cours dev.";         Action={ Show-ComingSoon } }
     )
 }
 
-$global:actionButtons = @()
-
 function Show-ActionButtons {
-    param($tabName)
+    param([string]$tabName)
     $actions = $actionsByTab[$tabName]
-    if ($null -eq $actions) {
-        [System.Windows.Forms.MessageBox]::Show("ERREUR : Aucune action trouvée pour l’onglet '$tabName' !","ERREUR")
+    if (-not $actions) {
+        [System.Windows.Forms.MessageBox]::Show("ERREUR : Aucune action pour l’onglet '$tabName'","ERREUR")
         return
     }
+
+    # Supprime les anciens boutons
     foreach ($btn in $global:actionButtons) { $form.Controls.Remove($btn) }
     $global:actionButtons = @()
-    $actionX = 180
+    $actionX = 300
+
     foreach ($action in $actions) {
         $btn = New-Object System.Windows.Forms.Button
-        $btn.Text = $action.Text
-        $btn.Size = New-Object System.Drawing.Size(150, 60)
-        $btn.Location = New-Object System.Drawing.Point($actionX, 200)
-        $btn.BackColor = [System.Drawing.Color]::$($action.Color)
-        $btn.ForeColor = [System.Drawing.Color]::Black
+        $btn.Text      = $action.Text
+        $btn.Size      = New-Object System.Drawing.Size(150,60)
+        $btn.Location  = New-Object System.Drawing.Point($actionX,200)
         $btn.FlatStyle = 'Flat'
-        $btn.Font = New-Object System.Drawing.Font("Consolas", 12, [System.Drawing.FontStyle]::Bold)
+        $btn.Font      = New-Object System.Drawing.Font("Consolas",12,[System.Drawing.FontStyle]::Bold)
+
+        # ——————————————
+        # * Nouvelle section : appliquer la couleur selon le thème *
+        # ——————————————
+        if ($global:theme -eq "dark") {
+            $btn.BackColor = [System.Drawing.Color]::White
+            $btn.ForeColor = $greenLime
+        }
+        else {
+            $btn.BackColor = $greenLime
+            $btn.ForeColor = [System.Drawing.Color]::White
+        }
+        # ——————————————
+
         $btn.Add_Click($action.Action)
         $form.Controls.Add($btn)
         $global:actionButtons += $btn
@@ -1457,38 +1556,35 @@ function Show-ActionButtons {
     }
 }
 
-$tabX = 180
+
+# Création des boutons d’onglets
+$tabX = 300
 foreach ($tab in $tabs) {
     $btnTab = New-Object System.Windows.Forms.Button
-    $btnTab.Text = $tab
-    $btnTab.Size = New-Object System.Drawing.Size(150, 40)
-    $btnTab.Location = New-Object System.Drawing.Point($tabX, 80)
-    $btnTab.BackColor = [System.Drawing.Color]::DarkSlateBlue
-    $btnTab.ForeColor = [System.Drawing.Color]::White
+    $btnTab.Text      = $tab
+    $btnTab.Size      = New-Object System.Drawing.Size(150,40)
+    $btnTab.Location  = New-Object System.Drawing.Point($tabX,120)
     $btnTab.FlatStyle = 'Flat'
-    $btnTab.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
-    # --- SOLUTION : récupérer le texte du bouton cliqué ---
-    $btnTab.Add_Click( {
-        param($sender, $event)
-        $tabClicked = $sender.Text
-        Show-ActionButtons $tabClicked
-    })
+    $btnTab.Font      = New-Object System.Drawing.Font("Consolas",10,[System.Drawing.FontStyle]::Bold)
+    $btnTab.Add_Click({ param($s,$e) Show-ActionButtons $s.Text })
+    $tabButtons     += $btnTab
     $form.Controls.Add($btnTab)
     $tabX += 160
 }
 
+# Afficher par défaut le premier onglet
 Show-ActionButtons $tabs[0]
 
-# Zone de log
-$textBoxLogs = New-Object System.Windows.Forms.RichTextBox -Property @{
-    Multiline = $true
-    ScrollBars = 'Vertical'
-    Size = New-Object System.Drawing.Size(800, 385)
-    Location = New-Object System.Drawing.Point(180, 320)
-    ReadOnly = $true
-    BackColor = "Black"
-    ForeColor = "white"
-}
+# -------------------------
+# 9. Zone de log
+# -------------------------
+$textBoxLogs = New-Object System.Windows.Forms.RichTextBox
+$textBoxLogs.Multiline  = $true
+$textBoxLogs.ScrollBars = "Vertical"
+$textBoxLogs.ReadOnly   = $true
+$textBoxLogs.WordWrap   = $true
+$textBoxLogs.Size       = New-Object System.Drawing.Size(790,410)
+$textBoxLogs.Location   = New-Object System.Drawing.Point(300,310)
 $form.Controls.Add($textBoxLogs)
 
 function Write-Log {
@@ -1542,52 +1638,55 @@ function Write-LogInfo {
     $textBoxLogs.ScrollToCaret()
 }
 
-# Barre de scan (Progression style "scanner")
+# -------------------------
+# 10. Barre de scan (animation)
+# -------------------------
 $scanPanel = New-Object System.Windows.Forms.Panel
-$scanPanel.Size = New-Object System.Drawing.Size(800, 10)
-$scanPanel.Location = New-Object System.Drawing.Point(180, 280)
-$scanPanel.BackColor = [System.Drawing.Color]::Gray
+$scanPanel.Size     = New-Object System.Drawing.Size(790,10)
+$scanPanel.Location = New-Object System.Drawing.Point(300,280)
+$scanPanel.BackColor= [System.Drawing.Color]::Gray
+$form.Controls.Add($scanPanel)
 
 $scanner = New-Object System.Windows.Forms.Panel
-$scanner.Size = New-Object System.Drawing.Size(100, 10)
-$scanner.BackColor = [System.Drawing.Color]::Lime
-$scanner.Left = -100
+$scanner.Size       = New-Object System.Drawing.Size(100,10)
+$scanner.BackColor  = [System.Drawing.Color]::Lime
+$scanner.Left       = -100
 $scanPanel.Controls.Add($scanner)
-$form.Controls.Add($scanPanel)
 
 $timer = New-Object System.Windows.Forms.Timer
 $timer.Interval = 30
 $timer.Add_Tick({
     $scanner.Left += 5
-    if ($scanner.Left -ge $scanPanel.Width) {
-        $scanner.Left = -$scanner.Width
-    }
+    if ($scanner.Left -ge $scanPanel.Width) { $scanner.Left = -$scanner.Width }
 })
 $timer.Start()
 
-# Bouton Exit
+# -------------------------
+# 11. Bouton EXIT et footer
+# -------------------------
 $exitBtn = New-Object System.Windows.Forms.Button
-$exitBtn.Text = "EXIT"
-$exitBtn.Size = New-Object System.Drawing.Size(150, 60)
-$exitBtn.Location = New-Object System.Drawing.Point(10, 650)
-$exitBtn.BackColor = [System.Drawing.Color]::OrangeRed
-$exitBtn.ForeColor = [System.Drawing.Color]::White
+$exitBtn.Text      = "Fermer"
+$exitBtn.Size      = New-Object System.Drawing.Size(150,60)
+$exitBtn.Location  = New-Object System.Drawing.Point(10,690)
 $exitBtn.FlatStyle = 'Flat'
-$exitBtn.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
+$exitBtn.BackColor = [System.Drawing.Color]::Red
+$exitBtn.ForeColor = [System.Drawing.Color]::White
+$exitBtn.Font      = New-Object System.Drawing.Font("Consolas",10,[System.Drawing.FontStyle]::Bold)
 $exitBtn.Add_Click({ $form.Close() })
 $form.Controls.Add($exitBtn)
 
-
-# Footer officiel
 $footer = New-Object System.Windows.Forms.Label
-$footer.Text = "© 2025 Cliconline - Département IT | Gestionnaire IT v2.0"
-$footer.AutoSize = $false
-$footer.Size = New-Object System.Drawing.Size(1000, 25)
-$footer.Location = New-Object System.Drawing.Point(10, 710)
-$footer.ForeColor = [System.Drawing.Color]::Gray
-$footer.BackColor = [System.Drawing.Color]::Black
-$footer.Font = New-Object System.Drawing.Font("Consolas", 9, [System.Drawing.FontStyle]::Italic)
+$footer.Text      = "© 2025 Cliconline - Département IT | Gestionnaire IT v2.0"
+$footer.AutoSize  = $false
+$footer.Size      = New-Object System.Drawing.Size(500,25)
+$footer.Location  = New-Object System.Drawing.Point(300,730)
+$footer.ForeColor = [System.Drawing.Color]::FromArgb(117,180,25)
+$footer.Font      = New-Object System.Drawing.Font("Consolas",9,[System.Drawing.FontStyle]::Italic)
 $footer.TextAlign = "MiddleCenter"
 $form.Controls.Add($footer)
 
+# -------------------------
+# 12. Appliquer thème initial et afficher
+# -------------------------
+Apply-Theme -mode $global:theme
 [void]$form.ShowDialog()
