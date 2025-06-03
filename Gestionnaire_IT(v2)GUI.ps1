@@ -39,9 +39,9 @@ function Apply-Theme {
         $themeButton.ForeColor = [System.Drawing.Color]::Black
 
         foreach ($btn in $itemButtons)         { $btn.BackColor = $greenLime; $btn.ForeColor = [System.Drawing.Color]::White }
-        foreach ($btn in $tabButtons)          { $btn.BackColor = "white"; $btn.ForeColor = $greenLime }
-        foreach ($btn in $generalButtons)      { $btn.BackColor = $greenLime; $btn.ForeColor = [System.Drawing.Color]::White }
-        foreach ($btn in $global:actionButtons){ $btn.BackColor = "white"; $btn.ForeColor = [System.Drawing.Color]::FromArgb(45,45,45) }
+        foreach ($btn in $tabButtons)          { $btn.BackColor = "white"; $btn.ForeColor = [System.Drawing.Color]::FromArgb(45,45,45) }
+        foreach ($btn in $generalButtons)      { $btn.BackColor = [System.Drawing.Color]::White; $btn.ForeColor = $greenLime }
+        foreach ($btn in $global:actionButtons){ $btn.BackColor = [System.Drawing.Color]::White; $btn.ForeColor = $greenLime }
     } else {
         $form.BackColor       = [System.Drawing.Color]::White
         $titleLabel.ForeColor = $greenLime
@@ -227,7 +227,7 @@ function Boost-PCPerformance {
         "Nettoyer le dossier Temp",
         "Vider la corbeille",
         "Arreter OneDrive",
-        "Augmenter la RAM virtuelle (pagefile)",
+        "Augmenter la RAM virtuelle",
         "Gerer les apps au demarrage"
     ))
     $formBoost.Controls.Add($checkList)
@@ -236,8 +236,8 @@ function Boost-PCPerformance {
     $btnOK.Text = "Lancer"
     $btnOK.Size = New-Object System.Drawing.Size(100, 40)
     $btnOK.Location = New-Object System.Drawing.Point(270, 220)
-    $btnOK.BackColor = [System.Drawing.Color]::LimeGreen
-    $btnOK.ForeColor = [System.Drawing.Color]::Black
+    $btnOK.BackColor = $greenLime
+    $btnOK.ForeColor = "white"
     $btnOK.FlatStyle = 'Flat'
     $formBoost.Controls.Add($btnOK)
 
@@ -245,8 +245,8 @@ function Boost-PCPerformance {
     $btnCancel.Text = "Annuler"
     $btnCancel.Size = New-Object System.Drawing.Size(100, 40)
     $btnCancel.Location = New-Object System.Drawing.Point(120, 220)
-    $btnCancel.BackColor = [System.Drawing.Color]::IndianRed
-    $btnCancel.ForeColor = [System.Drawing.Color]::White
+    $btnCancel.BackColor = "Red"
+    $btnCancel.ForeColor = "White"
     $btnCancel.FlatStyle = 'Flat'
     $formBoost.Controls.Add($btnCancel)
 
@@ -352,7 +352,6 @@ function Create-SystemRestorePoint {
     try {
         Write-Log "Creation point de restauration systeme..."
         Checkpoint-Computer -Description "Point_Restauration_Outil_IT_ClicOnLine" -RestorePointType "MODIFY_SETTINGS"
-        Animate-ProgressBar -progressBar $progressBar -durationSeconds 2
         Write-LogOk "Point de restauration cree."
     } catch {
         Write-LogError "Erreur creation point de restauration : $_"
@@ -383,7 +382,6 @@ function Restart-PC {
 
 function Check-ObsoleteDrivers {
     Write-Log "Scan des pilotes obsolètes..."
-    Animate-ProgressBar -progressBar $progressBar -durationSeconds 2
 
     $drivers = Get-WmiObject Win32_PnPSignedDriver -ErrorAction SilentlyContinue
     $limitDate = (Get-Date).AddYears(-2)
@@ -411,7 +409,7 @@ function Check-ObsoleteDrivers {
 
     Write-LogAvert "Nombre total de pilotes potentiellement obsolètes : $($obsolete.Count)"
 
-    # === Fenêtre de confirmation ===
+    # Fenêtre de confirmation
     $formConfirm = New-Object System.Windows.Forms.Form
     $formConfirm.Text = "Suppression des pilotes obsolètes"
     $formConfirm.Size = New-Object System.Drawing.Size(600, 250)
@@ -432,16 +430,16 @@ function Check-ObsoleteDrivers {
     $btnYes.Text = "Oui - Supprimer"
     $btnYes.Size = New-Object System.Drawing.Size(150, 40)
     $btnYes.Location = New-Object System.Drawing.Point(320, 130)
-    $btnYes.BackColor = [System.Drawing.Color]::Orange
-    $btnYes.ForeColor = [System.Drawing.Color]::Black
+    $btnYes.BackColor = $greenLime
+    $btnYes.ForeColor = "white"
     $btnYes.FlatStyle = 'Flat'
 
     $btnNo = New-Object System.Windows.Forms.Button
     $btnNo.Text = "Non - Annuler"
     $btnNo.Size = New-Object System.Drawing.Size(150, 40)
     $btnNo.Location = New-Object System.Drawing.Point(120, 130)
-    $btnNo.BackColor = [System.Drawing.Color]::IndianRed
-    $btnNo.ForeColor = [System.Drawing.Color]::White
+    $btnNo.BackColor = "Red"
+    $btnNo.ForeColor = "White"
     $btnNo.FlatStyle = 'Flat'
 
     $btnYes.Add_Click({
@@ -469,30 +467,46 @@ function Check-ObsoleteDrivers {
             try {
                 Write-Log "Tentative de désactivation du périphérique : $deviceName"
                 Disable-PnpDevice -InstanceId $deviceID -Confirm:$false -ErrorAction SilentlyContinue
+
+                $devStatus = Get-PnpDevice -InstanceId $deviceID -ErrorAction SilentlyContinue
+                if ($devStatus.Status -ne "Disabled") {
+                    Write-LogAvert "$deviceName n’a pas pu être désactivé proprement."
+                    $needReboot = $true
+                } else {
+                    Write-LogOk "$deviceName désactivé avec succès."
+                }
             } catch {
-                Write-LogError "Échec de la désactivation : $deviceName - $_"
+                Write-LogError "Erreur lors de la désactivation de $deviceName : $_"
+                $needReboot = $true
             }
 
             try {
                 Write-Log "Suppression du pilote : $deviceName ($infName)..."
                 $process = Start-Process -FilePath "pnputil.exe" -ArgumentList "/delete-driver `"$infName`" /uninstall /force /quiet" -NoNewWindow -Wait -PassThru
 
-                Start-Sleep -Seconds 2
-
-                $check = Get-WmiObject Win32_PnPSignedDriver | Where-Object { $_.InfName -eq $infName }
-                if ($check) {
-                    Write-LogError "Le pilote $infName est toujours présent après suppression."
+                if ($process.ExitCode -ne 0) {
+                    Write-LogError "Échec de suppression de $infName - Code de sortie : $($process.ExitCode)"
                     $needReboot = $true
                 } else {
-                    Write-LogOk "Pilote supprimé : $infName"
+                    Start-Sleep -Seconds 2
+                    $check = Get-WmiObject Win32_PnPSignedDriver | Where-Object { $_.InfName -eq $infName }
+                    if ($check) {
+                        Write-LogError "Le pilote $infName est toujours présent après suppression."
+                        $needReboot = $true
+                    } else {
+                        Write-LogOk "Pilote supprimé : $infName"
+                    }
                 }
             } catch {
                 Write-LogError "Erreur lors de la suppression du pilote $deviceName : $_"
+                $needReboot = $true
             }
         }
 
         if ($needReboot) {
             Write-LogAvert "Un redémarrage du système est recommandé pour finaliser la suppression de certains pilotes."
+        } else {
+            Write-LogOk "Tous les pilotes obsolètes ont été supprimés sans redémarrage requis."
         }
 
     } else {
@@ -1079,7 +1093,7 @@ function Get-SystemInfoPlus {
     $form.Text = "Système en Temps Réel"
     $form.Size = New-Object System.Drawing.Size(1000, 620)
     $form.MinimumSize = $form.Size
-    $form.BackColor = [System.Drawing.Color]::Black
+    $form.BackColor = [System.Drawing.Color]::FromArgb(45,45,45)
     $form.Font = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
 
     # === Infos système texte ===
@@ -1157,15 +1171,14 @@ function Get-SystemInfoPlus {
     $btnClose.Text = "Fermer"
     $btnClose.Size = New-Object System.Drawing.Size(120, 40)
     $btnClose.Location = New-Object System.Drawing.Point(420, 500)
-    $btnClose.BackColor = [System.Drawing.Color]::Orange
-    $btnClose.ForeColor = [System.Drawing.Color]::Black
+    $btnClose.BackColor = "red"
+    $btnClose.ForeColor = "white"
     $btnClose.FlatStyle = 'Flat'
     $btnClose.Add_Click({
     $timer.Stop()
     $form.Invoke([Action]{
         $form.Close()
         $form.Dispose()
-        [System.Windows.Forms.Application]::Exit()
     })
 })
     $form.Add_FormClosing({
@@ -1231,28 +1244,33 @@ function Get-SystemInfoPlus {
         $progressDisk.Value = [Math]::Min($diskVal, 100)
         $labelDisk.Text = "Disque C: utilisé : $diskVal%"
 
+        $disks = Get-PhysicalDisk | ForEach-Object {
+            $type = if ($_.MediaType) { $_.MediaType } else { "Inconnu" }
+            "Nom : $($_.FriendlyName) - Type : $type - Taille : $([math]::Round($_.Size/1GB)) Go"
+        }
+
+        $textBox.Lines = $textLines
+        $textBox.Multiline = $true
+
         $os = Get-CimInstance Win32_OperatingSystem
         $comp = Get-CimInstance Win32_ComputerSystem
         $cpu = Get-CimInstance Win32_Processor
         $bios = Get-CimInstance Win32_BIOS
-        $text = @"
-Ordinateur     : $env:COMPUTERNAME
-Utilisateur    : $env:USERNAME
-OS             : $($os.Caption)
-Version        : $($os.Version)
-Architecture   : $($os.OSArchitecture)
-Fabricant      : $($comp.Manufacturer)
-Numéro de série : $($bios.SerialNumber)
-Modèle         : $($comp.Model)
-CPU            : $($cpu.Name)
-Cœurs logiques : $($cpu.NumberOfLogicalProcessors)
-Température CPU: $tempVal °C
-
-
-
-Certaines informations demandent l'accès administrateur
-"@
         $textBox.Text = $text
+        $textBox.Text = "Ordinateur     : $env:COMPUTERNAME`r`n" +
+                "Utilisateur    : $env:USERNAME`r`n" +
+                "OS             : $($os.Caption)`r`n" +
+                "Version        : $($os.Version)`r`n" +
+                "Architecture   : $($os.OSArchitecture)`r`n" +
+                "Fabricant      : $($comp.Manufacturer)`r`n" +
+                "Numéro de série : $($bios.SerialNumber)`r`n" +
+                "Modèle         : $($comp.Model)`r`n" +
+                "CPU            : $($cpu.Name)`r`n" +
+                "Cœurs logiques : $($cpu.NumberOfLogicalProcessors)`r`n" +
+                "Température CPU: $tempVal °C`r`n" +
+                "Disque         : $disks `r`n`r`n" +
+                "Certaines informations demandent l'accès administrateur"
+
     })
 
     $timer.Start()
@@ -1482,8 +1500,8 @@ $actionsByTab = @{
         @{ Text="WINDOWS UPDATE"; Action={ Scan-WindowsUpdate } }
         @{ Text="REPARER WINDOWS UPDATE"; Action={ Repair-WindowsUpdate } }
         @{ Text="INSTALLER WINGET"; Action={ Install-WingetIfMissing } }
-        @{ Text="TEST"; Action={ Analyse-ReactiviteSysteme } }
-        @{ Text="REDEMARRER"; Action={ Restart-PC } }
+        @{ Text="ANALYSE DE REACTIVITE SYSTEME"; Action={ Analyse-ReactiviteSysteme } }
+        @{ Text="SANTE"; Action={ Show-SystemHealthDashboard } }
     )
     "RESEAU" = @(
         @{ Text="DIAGNOSTIQUE"; Action={ Start-NetworkDiagnostic } }
