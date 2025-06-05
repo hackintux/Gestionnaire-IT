@@ -75,9 +75,15 @@ $logoBox = New-Object System.Windows.Forms.PictureBox
 $logoBox.Size        = New-Object System.Drawing.Size(60, 90)
 $logoBox.Location    = New-Object System.Drawing.Point(10, 10)
 $logoBox.SizeMode    = "StretchImage"
-$logoPath = "C:\Users\David Salvador\Documents\Scripts\Powershell\clic_version\Gestionnaire_IT_clic\icone.ico"
-if (Test-Path $logoPath) {
-    $logoBox.Image = [System.Drawing.Image]::FromFile($logoPath)
+$url = "https://www.cliconline.net/COL%20vertical%20-%20marge%202.png"
+try {
+    $webClient = New-Object System.Net.WebClient
+    $stream = $webClient.OpenRead($url)
+    if ($stream) {
+        $logoBox.Image = [System.Drawing.Image]::FromStream($stream)
+    }
+} catch {
+    Write-Warning "Impossible de charger l'image depuis l'URL."
 }
 $form.Controls.Add($logoBox)
 
