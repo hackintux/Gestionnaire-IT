@@ -1223,35 +1223,6 @@ function Get-SystemInfoPlus {
         return "Non disponible"
     }
 
-    $disks = Get-PhysicalDisk | ForEach-Object {
-            $type = if ($_.MediaType) { $_.MediaType } else { "Inconnu" }
-            "Nom : $($_.FriendlyName) - Type : $type - Taille : $([math]::Round($_.Size/1GB)) Go"
-        }
-
-        $textBox.Lines = $textLines
-        $textBox.Multiline = $true
-
-        $os = Get-CimInstance Win32_OperatingSystem
-        $comp = Get-CimInstance Win32_ComputerSystem
-        $cpu = Get-CimInstance Win32_Processor
-        $bios = Get-CimInstance Win32_BIOS
-        $textBox.Text = $text
-        $textBox.Text = "Ordinateur     : $env:COMPUTERNAME`r`n" +
-                "Utilisateur    : $env:USERNAME`r`n" +
-                "OS             : $($os.Caption)`r`n" +
-                "Version        : $($os.Version)`r`n" +
-                "Architecture   : $($os.OSArchitecture)`r`n" +
-                "Fabricant      : $($comp.Manufacturer)`r`n" +
-                "Numéro de série : $($bios.SerialNumber)`r`n" +
-                "Modèle         : $($comp.Model)`r`n" +
-                "CPU            : $($cpu.Name)`r`n" +
-                "Cœurs logiques : $($cpu.NumberOfLogicalProcessors)`r`n" +
-                "Température CPU: $tempVal °C`r`n" +
-                "Disque         : $disks `r`n`r`n" +
-                "Certaines informations demandent l'accès administrateur"
-
-    })
-
     # === Timer pour actualiser ===
     $timer = New-Object System.Windows.Forms.Timer
     $timer.Interval = 3000
@@ -1280,6 +1251,36 @@ function Get-SystemInfoPlus {
         $labelDisk.Text = "Disque C: utilisé : $diskVal%"
 
     $timer.Start()
+
+    $disks = Get-PhysicalDisk | ForEach-Object {
+            $type = if ($_.MediaType) { $_.MediaType } else { "Inconnu" }
+            "Nom : $($_.FriendlyName) - Type : $type - Taille : $([math]::Round($_.Size/1GB)) Go"
+        }
+
+        $textBox.Lines = $textLines
+        $textBox.Multiline = $true
+
+        $os = Get-CimInstance Win32_OperatingSystem
+        $comp = Get-CimInstance Win32_ComputerSystem
+        $cpu = Get-CimInstance Win32_Processor
+        $bios = Get-CimInstance Win32_BIOS
+        $textBox.Text = $text
+        $textBox.Text = "Ordinateur     : $env:COMPUTERNAME`r`n" +
+                "Utilisateur    : $env:USERNAME`r`n" +
+                "OS             : $($os.Caption)`r`n" +
+                "Version        : $($os.Version)`r`n" +
+                "Architecture   : $($os.OSArchitecture)`r`n" +
+                "Fabricant      : $($comp.Manufacturer)`r`n" +
+                "Numéro de série : $($bios.SerialNumber)`r`n" +
+                "Modèle         : $($comp.Model)`r`n" +
+                "CPU            : $($cpu.Name)`r`n" +
+                "Cœurs logiques : $($cpu.NumberOfLogicalProcessors)`r`n" +
+                "Température CPU: $tempVal °C`r`n" +
+                "Disque         : $disks `r`n`r`n" +
+                "Certaines informations demandent l'accès administrateur"
+
+    })
+    
     [void]$form.ShowDialog()
 }
 
