@@ -1223,34 +1223,7 @@ function Get-SystemInfoPlus {
         return "Non disponible"
     }
 
-    # === Timer pour actualiser ===
-    $timer = New-Object System.Windows.Forms.Timer
-    $timer.Interval = 3000
-    $timer.Add_Tick({
-        $cpuVal = [math]::Round($counterCPU.NextValue(), 3)
-        $ramVal = Get-RAMPercent
-        $diskVal = Get-DiskPercent
-        $tempVal = Get-CPUTemp
-
-        foreach ($q in @($queueCPU, $queueRAM, $queueDISK)) { if ($q.Count -ge 30) { [void]$q.Dequeue() } }
-        $queueCPU.Enqueue($cpuVal); $queueRAM.Enqueue($ramVal); $queueDISK.Enqueue($diskVal)
-
-        $chartCPU.Series[0].Points.Clear()
-        $chartRAM.Series[0].Points.Clear()
-        $chartDISK.Series[0].Points.Clear()
-
-        [int]$i = 0
-        foreach ($v in $queueCPU) { $chartCPU.Series[0].Points.AddXY($i++, $v) }
-        $i = 0; foreach ($v in $queueRAM) { $chartRAM.Series[0].Points.AddXY($i++, $v) }
-        $i = 0; foreach ($v in $queueDISK) { $chartDISK.Series[0].Points.AddXY($i++, $v) }
-
-        $progressRAM.Value = [Math]::Min($ramVal, 100)
-        $labelRAM.Text = "RAM utilisée : $ramVal%"
-
-        $progressDisk.Value = [Math]::Min($diskVal, 100)
-        $labelDisk.Text = "Disque C: utilisé : $diskVal%"
-
-        $disks = Get-PhysicalDisk | ForEach-Object {
+    $disks = Get-PhysicalDisk | ForEach-Object {
             $type = if ($_.MediaType) { $_.MediaType } else { "Inconnu" }
             "Nom : $($_.FriendlyName) - Type : $type - Taille : $([math]::Round($_.Size/1GB)) Go"
         }
@@ -1278,6 +1251,33 @@ function Get-SystemInfoPlus {
                 "Certaines informations demandent l'accès administrateur"
 
     })
+
+    # === Timer pour actualiser ===
+    $timer = New-Object System.Windows.Forms.Timer
+    $timer.Interval = 3000
+    $timer.Add_Tick({
+        $cpuVal = [math]::Round($counterCPU.NextValue(), 3)
+        $ramVal = Get-RAMPercent
+        $diskVal = Get-DiskPercent
+        $tempVal = Get-CPUTemp
+
+        foreach ($q in @($queueCPU, $queueRAM, $queueDISK)) { if ($q.Count -ge 30) { [void]$q.Dequeue() } }
+        $queueCPU.Enqueue($cpuVal); $queueRAM.Enqueue($ramVal); $queueDISK.Enqueue($diskVal)
+
+        $chartCPU.Series[0].Points.Clear()
+        $chartRAM.Series[0].Points.Clear()
+        $chartDISK.Series[0].Points.Clear()
+
+        [int]$i = 0
+        foreach ($v in $queueCPU) { $chartCPU.Series[0].Points.AddXY($i++, $v) }
+        $i = 0; foreach ($v in $queueRAM) { $chartRAM.Series[0].Points.AddXY($i++, $v) }
+        $i = 0; foreach ($v in $queueDISK) { $chartDISK.Series[0].Points.AddXY($i++, $v) }
+
+        $progressRAM.Value = [Math]::Min($ramVal, 100)
+        $labelRAM.Text = "RAM utilisée : $ramVal%"
+
+        $progressDisk.Value = [Math]::Min($diskVal, 100)
+        $labelDisk.Text = "Disque C: utilisé : $diskVal%"
 
     $timer.Start()
     [void]$form.ShowDialog()
